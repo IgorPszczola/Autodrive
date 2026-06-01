@@ -30,9 +30,8 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(management -> management.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                         .authorizeHttpRequests(auth -> auth
-                                        .requestMatchers("/api/auth/**").permitAll()
-                                        .requestMatchers("/api/models/**").permitAll()
-                                        .requestMatchers("/h2-console/**").permitAll()
+                                        .requestMatchers("/api/auth/**", "/api/models/**", "/h2-console/**").permitAll()
+                                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
                                         .anyRequest().authenticated()
                         );
             http.headers(headers -> headers.frameOptions(frame -> frame.disable()));
