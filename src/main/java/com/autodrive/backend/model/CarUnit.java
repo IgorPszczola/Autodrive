@@ -26,6 +26,12 @@ public class CarUnit {
 	@Column(name = "status")
 	private String status;
 
+	@Column(name = "vin", nullable = false, unique = true)
+	private String vin;
+
+	@Column(name = "color")
+	private String color;	
+
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "car_model_id")
 	private CarModel carModel;
