@@ -37,7 +37,7 @@ public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         .csrf(csrf -> csrf.disable())
         .sessionManagement(management -> management.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
         .authorizeHttpRequests(auth -> auth
-            .requestMatchers("/api/auth/**", "/api/models/**", "/h2-console/**", "/error").permitAll()
+            .requestMatchers("/api/auth/**", "/api/models/**", "/h2-console/**", "/error", "/api/cars/**").permitAll()
             .requestMatchers("/api/admin/**").hasRole("ADMIN")
             .anyRequest().authenticated()
         ) 

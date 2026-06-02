@@ -7,16 +7,17 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import java.math.BigDecimal;
 
+
 @Entity
 @Table(name = "car_models")
-@Getter
 @Setter
+@Getter
 @AllArgsConstructor
 @NoArgsConstructor
 public class CarModel {
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	private Long car_model_id;
+	private Integer car_model_id;
 
 	@Column(nullable = false)
 	private String brand;
