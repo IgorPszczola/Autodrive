@@ -9,16 +9,20 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.autodrive.backend.dto.CarModelResponse;
+import com.autodrive.backend.dto.CarUnitResponse;
 import com.autodrive.backend.service.CarModelService;
+import com.autodrive.backend.service.CarUnitService;
 
 @RestController
 @RequestMapping("/api/cars")
 public class CarController {
     
     private final CarModelService carModelService;
+    private final CarUnitService carUnitService;
 
-    public CarController(CarModelService carModelService) {
+    public CarController(CarModelService carModelService, CarUnitService carUnitService) {
         this.carModelService = carModelService;
+        this.carUnitService = carUnitService;
     }
 
     @GetMapping("/models")
@@ -34,5 +38,11 @@ public class CarController {
         } else {
             return ResponseEntity.notFound().build();
         }
+    }
+
+    @GetMapping("/models/{id}/units")
+    public ResponseEntity<List<CarUnitResponse>> getCarUnitsByModelId(@PathVariable Integer id){
+        List<CarUnitResponse> units = carUnitService.getCarUnitsByModelId(id);
+        return ResponseEntity.ok(units);
     }
 }

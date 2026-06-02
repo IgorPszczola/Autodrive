@@ -32,7 +32,7 @@ public class CarModelService {
 
     private CarModelResponse mapToDto(CarModel carModel) {
         return new CarModelResponse(
-        carModel.getCar_model_id(),
+        carModel.getId(),
         carModel.getBrand(),
         carModel.getModel(),
         carModel.getSegment(),

@@ -3,7 +3,7 @@ package com.autodrive.backend.dto;
 import java.math.BigDecimal;
 
 public record CarModelResponse(
-    Integer carModelId,
+    Integer id,
     String brand,
     String model,
     String segment,

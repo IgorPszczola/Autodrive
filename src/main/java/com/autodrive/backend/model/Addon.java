@@ -16,7 +16,8 @@ public class Addon {
     
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer addon_id;
+    @Column(name = "addon_id")
+    private Integer id;
 
     @Column(nullable = false, length = 100)
     private String name;

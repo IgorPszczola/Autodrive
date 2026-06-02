@@ -17,7 +17,8 @@ import java.math.BigDecimal;
 public class CarModel {
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	private Integer car_model_id;
+	@Column(name = "car_model_id")
+	private Integer id;
 
 	@Column(nullable = false)
 	private String brand;

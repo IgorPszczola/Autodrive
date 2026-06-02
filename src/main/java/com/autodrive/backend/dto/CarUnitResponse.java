@@ -1,8 +1,8 @@
 package com.autodrive.backend.dto;
 
 public record CarUnitResponse(
-    Integer carUnitId,
-    Integer carModelId,
+    Long id,
+    Integer modelId,
     String vin,
     String licensePlate,
     String color,
