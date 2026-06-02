@@ -29,6 +29,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                                     HttpServletResponse response,
                                     FilterChain filterChain) throws ServletException, IOException {
 
+    
         try {
             String jwt = parseJwt(request);
 

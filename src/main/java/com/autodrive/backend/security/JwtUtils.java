@@ -10,6 +10,7 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import java.util.Date;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.Authentication;
 
 
 @Component
@@ -25,9 +26,9 @@ public class JwtUtils {
         return Keys.hmacShaKeyFor(jwtSecret.getBytes());
     }
 
-    public String generateJwtToken(String email){
+    public String generateJwtToken(String authentication){
         return Jwts.builder()
-                .subject(email)
+                .subject(authentication)
                 .issuedAt(new Date())
                 .expiration(new Date((new Date()).getTime() + jwtExpirationMs))
                 .signWith(getSigningKey())
