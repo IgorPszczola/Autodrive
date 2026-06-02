@@ -29,17 +29,17 @@ public class AuthService {
 
     public String registerUser(RegisterRequest request){
 
-        if (userRepository.existsByEmail(request.getEmail())) {
+        if (userRepository.existsByEmail(request.email())) {
             throw new RuntimeException("User already exists");
         }
         User user = new User();
-        user.setEmail(request.getEmail());
-        user.setFirstName(request.getFirstName());
-        user.setLastName(request.getLastName());
-        user.setPhoneNumber(request.getPhoneNumber());
-        user.setDriverLicenseNumber(request.getDriverLicenseNumber());
+        user.setEmail(request.email());
+        user.setFirstName(request.firstName());
+        user.setLastName(request.lastName());
+        user.setPhoneNumber(request.phoneNumber());
+        user.setDriverLicenseNumber(request.driverLicenseNumber());
 
-        String encodedPassword = passwordEncoder.encode(request.getPassword());
+        String encodedPassword = passwordEncoder.encode(request.password());
         user.setPasswordHash(encodedPassword);
 
         userRepository.save(user);
@@ -49,10 +49,10 @@ public class AuthService {
 
     public String loginUser(LoginRequest request){
         Authentication authentication = authenticationManager.authenticate(
-            new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword())
+            new UsernamePasswordAuthenticationToken(request.email(), request.password())
         );
 
-        return jwtUtils.generateJwtToken(request.getEmail());
+        return jwtUtils.generateJwtToken(request.email());
     }
 }
 

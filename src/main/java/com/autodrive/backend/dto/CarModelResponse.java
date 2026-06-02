@@ -2,13 +2,18 @@ package com.autodrive.backend.dto;
 
 import java.math.BigDecimal;
 
-import lombok.Data;
-
-@Data
-public class CarModelResponse {
-    private Integer car_model_id;
-    private String brand;
-    private String model;
-    private Integer productionYear;
-    private BigDecimal pricePerDay;
-}
+public record CarModelResponse(
+    Integer carModelId,
+    String brand,
+    String model,
+    String segment,
+    Integer productionYear,
+    BigDecimal pricePerDay,
+    BigDecimal depositAmount,
+    Integer mileageLimitPerDay,
+    BigDecimal extraMileageFee,
+    String imageUrl,
+    Integer powerHp,
+    String transmissionType,
+    String fuelType
+) {}

@@ -4,7 +4,6 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.PathVariable;
 
 import com.autodrive.backend.repository.CarModelRepository;
 
@@ -32,12 +31,20 @@ public class CarModelService {
     }
 
     private CarModelResponse mapToDto(CarModel carModel) {
-        CarModelResponse response = new CarModelResponse();
-        response.setCar_model_id(carModel.getCar_model_id());
-        response.setBrand(carModel.getBrand());
-        response.setModel(carModel.getModel());
-        response.setProductionYear(carModel.getProductionYear());
-        response.setPricePerDay(carModel.getPricePerDay());
-        return response;
+        return new CarModelResponse(
+        carModel.getCar_model_id(),
+        carModel.getBrand(),
+        carModel.getModel(),
+        carModel.getSegment(),
+        carModel.getProductionYear(),
+        carModel.getPricePerDay(),
+        carModel.getDepositAmount(),
+        carModel.getMileageLimitPerDay(),
+        carModel.getExtraMileageFee(),
+        carModel.getImageUrl(),
+        carModel.getPowerHp(),
+        carModel.getTransmissionType(),
+        carModel.getFuelType()
+    );
     }
 }
