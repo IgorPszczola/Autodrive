@@ -8,6 +8,7 @@ import lombok.Setter;
 
 import org.hibernate.annotations.CreationTimestamp;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Set;
@@ -32,13 +33,13 @@ public class Reservation {
     private LocalDate endDate;
     
     @Column(nullable = false)
-    private Double basePrice;
+    private BigDecimal basePrice;
     
     @Column(nullable = false)
     private Double discountApplied;
     
     @Column(nullable = false)
-    private Double totalPrice;
+    private BigDecimal totalPrice;
     
     @Column(nullable = false, length = 50)
     private String status;
@@ -65,5 +66,5 @@ public class Reservation {
         joinColumns = @JoinColumn(name = "reservation_id"),
         inverseJoinColumns = @JoinColumn(name = "addon_id")
     )
-    private Set<Addon> addons;
+    private Set<Addon> addons = new java.util.HashSet<>();
 }

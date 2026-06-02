@@ -36,5 +36,4 @@ public class CarUnit {
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "car_model_id")
 	private CarModel carModel;
-
 }
