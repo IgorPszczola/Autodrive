@@ -67,4 +67,8 @@ public class Reservation {
         inverseJoinColumns = @JoinColumn(name = "addon_id")
     )
     private Set<Addon> addons = new java.util.HashSet<>();
+
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "insurance_variant_id", nullable = false)
+    private InsuranceVariant insuranceVariant;
 }

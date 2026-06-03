@@ -16,5 +16,6 @@ public record ReservationResponse(
     String userEmail,
     String carBrand,
     String carModel,
-    String licensePlate
+    String licensePlate,
+    String insuranceVariantName
 ) {}

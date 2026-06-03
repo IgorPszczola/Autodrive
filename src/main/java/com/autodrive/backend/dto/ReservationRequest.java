@@ -7,5 +7,6 @@ public record ReservationRequest(
     Integer id,
     LocalDateTime startDate,
     LocalDateTime endDate,
-    List<Integer> addonIds
+    List<Integer> addonIds,
+    Integer insuranceVariantId
 ) {}

@@ -12,10 +12,12 @@ import org.springframework.stereotype.Service;
 import com.autodrive.backend.dto.ReservationRequest;
 import com.autodrive.backend.model.Addon;
 import com.autodrive.backend.model.CarUnit;
+import com.autodrive.backend.model.InsuranceVariant;
 import com.autodrive.backend.model.Reservation;
 import com.autodrive.backend.model.User;
 import com.autodrive.backend.repository.AddonRepository;
 import com.autodrive.backend.repository.CarUnitRepository;
+import com.autodrive.backend.repository.InsuranceVariantRepository;
 import com.autodrive.backend.repository.ReservationRepository;
 import com.autodrive.backend.repository.UserRepository;
 
@@ -28,12 +30,14 @@ public class ReservationService {
     private final UserRepository userRepository;
     private final CarUnitRepository carUnitRepository;
     private final AddonRepository addonRepository;
+    private final InsuranceVariantRepository insuranceVariantRepository;
     
-    public ReservationService(ReservationRepository reservationRepository, UserRepository userRepository, CarUnitRepository carUnitRepository, AddonRepository addonRepository) {
+    public ReservationService(ReservationRepository reservationRepository, UserRepository userRepository, CarUnitRepository carUnitRepository, AddonRepository addonRepository, InsuranceVariantRepository insuranceVariantRepository) {
         this.reservationRepository = reservationRepository;
         this.userRepository = userRepository;
         this.carUnitRepository = carUnitRepository;
         this.addonRepository = addonRepository;
+        this.insuranceVariantRepository = insuranceVariantRepository;
     }
 
 
@@ -84,6 +88,21 @@ public class ReservationService {
         reservation.setCarModel(car.getCarModel());
 
         reservation.setStatus("CONFIRMED");
+
+
+        if (request.insuranceVariantId() == null) {
+            throw new IllegalArgumentException("You have to choose an insurance variant");
+        }
+
+        InsuranceVariant insurance = insuranceVariantRepository.findById(request.insuranceVariantId())
+            .orElseThrow(() -> new RuntimeException("Insurance variant not found"));
+
+        reservation.setInsuranceVariant(insurance);
+
+        BigDecimal insuranceCost = insurance.getPricePerDay().multiply(BigDecimal.valueOf(days));
+
+        price = price.add(insuranceCost);
+
 
         List<Addon> addons = addonRepository.findAllById(request.addonIds());
                 

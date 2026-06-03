@@ -22,3 +22,8 @@ VALUES (3, 2, 'WN-999RS', 8000, 'AVAILABLE', 'VIN987654321AUDI01', 'Nardo Grey')
 
 INSERT INTO car_units (car_unit_id, car_model_id, license_plate, current_mileage, status, vin, color)
 VALUES (4, 3, 'KR-111Y', 5000, 'AVAILABLE', 'VIN456789123TOYOTA01', 'Red');
+
+
+INSERT INTO insurance_variants (insurance_id, name, price_per_day, description) VALUES (1, 'SILVER', 49.00, 'Podstawowe OC/AC, udział własny w szkodzie do 5000 PLN');
+INSERT INTO insurance_variants (insurance_id, name, price_per_day, description) VALUES (2, 'GOLD', 99.00, 'Pełne AC, brak udziału własnego, ubezpieczenie szyb i opon');
+INSERT INTO insurance_variants (insurance_id, name, price_per_day, description) VALUES (3, 'PLATINUM', 149.00, 'Wszystko to co GOLD + darmowy assistance 24/7 na terenie całej Europy i auto zastępcze');

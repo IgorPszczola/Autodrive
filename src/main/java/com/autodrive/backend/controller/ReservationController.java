@@ -45,7 +45,8 @@ public class ReservationController {
         res.getUser().getEmail(),
         res.getCarModel().getBrand(),
         res.getCarModel().getModel(),
-        res.getCarUnit().getLicensePlate()
+        res.getCarUnit().getLicensePlate(),
+        res.getInsuranceVariant().getName()
     );
 
         return ResponseEntity.ok(response);
