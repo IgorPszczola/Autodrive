@@ -1,6 +1,7 @@
 package com.autodrive.backend.service;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
@@ -54,10 +55,22 @@ public class ReservationService {
             throw new IllegalArgumentException("Start date cannot be after end date");
         }
 
-        User user = getUserByEmail(email);
-        CarUnit car = getAvailableCarUnitById(carUnitID);
+        LocalDate requestedStartDate = request.startDate().toLocalDate();
+        LocalDate requestedEndDate = request.endDate().toLocalDate();
 
-        car.setStatus("RENTED");
+        boolean isOccupied = reservationRepository.existsCollision(carUnitID, requestedStartDate, requestedEndDate);
+        if (isOccupied) {
+            throw new IllegalStateException("Ten samochód jest już zarezerwowany w wybranym terminie!");
+        }
+
+        User user = getUserByEmail(email);
+        
+        CarUnit car = carUnitRepository.findById(carUnitID)
+            .orElseThrow(() -> new RuntimeException("Car unit not found"));
+
+        if ("MAINTENANCE".equals(car.getStatus())) {
+            throw new IllegalStateException("Samochód jest obecnie wyłączony z użytku (serwis).");
+        }
 
         long days = ChronoUnit.DAYS.between(request.startDate(), request.endDate());
         if (days == 0) {

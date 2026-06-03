@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.autodrive.backend.dto.CarModelResponse;
 import com.autodrive.backend.dto.CarUnitResponse;
+import com.autodrive.backend.dto.TerminResponse;
 import com.autodrive.backend.service.CarModelService;
 import com.autodrive.backend.service.CarUnitService;
 
@@ -44,5 +45,11 @@ public class CarController {
     public ResponseEntity<List<CarUnitResponse>> getCarUnitsByModelId(@PathVariable Integer id){
         List<CarUnitResponse> units = carUnitService.getCarUnitsByModelId(id);
         return ResponseEntity.ok(units);
+    }
+
+    @GetMapping("/units/{carUnitId}/occupied-dates")
+    public ResponseEntity<List<TerminResponse>> getCarOccupiedDates(@PathVariable Long carUnitId) {
+        List<TerminResponse> dates = carUnitService.getOccupiedDatesForCar(carUnitId);
+        return ResponseEntity.ok(dates);
     }
 }
