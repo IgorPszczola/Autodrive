@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.autodrive.backend.dto.ReservationRequest;
+import com.autodrive.backend.dto.ReservationResponse;
 import com.autodrive.backend.model.Reservation;
 import com.autodrive.backend.service.ReservationService;
 
@@ -23,15 +24,30 @@ public class ReservationController {
     }
 
     @PostMapping
-    public ResponseEntity<Reservation> createReservation(
+    public ResponseEntity<ReservationResponse> createReservation(
             @RequestParam Integer carUnitId,
             @RequestBody ReservationRequest request,
             Principal principal
     ) {
         String email = principal.getName();
 
-        Reservation reservation = reservationService.makeReservation(carUnitId, email, request);
+        Reservation res = reservationService.makeReservation(carUnitId, email, request);
 
-        return ResponseEntity.ok(reservation);
+        ReservationResponse response = new ReservationResponse(
+        res.getId(),
+        res.getStartDate(),
+        res.getEndDate(),
+        res.getBasePrice(),
+        res.getDiscountApplied(),
+        res.getTotalPrice(),
+        res.getStatus(),
+        res.getCreatedAt(),
+        res.getUser().getEmail(),
+        res.getCarModel().getBrand(),
+        res.getCarModel().getModel(),
+        res.getCarUnit().getLicensePlate()
+    );
+
+        return ResponseEntity.ok(response);
     }
 }

@@ -42,11 +42,6 @@ public class ReservationService {
             .orElseThrow(() -> new RuntimeException("User not found"));
     }
     
-    private CarUnit getAvailableCarUnitById(Integer carUnitID){
-        return carUnitRepository.findByIdAndAvailable(carUnitID, true)
-            .orElseThrow(() -> new RuntimeException("Car unit not found"));
-    }
-
 
     @Transactional
     public Reservation makeReservation(Integer carUnitID, String email, ReservationRequest request){
@@ -86,6 +81,9 @@ public class ReservationService {
         reservation.setStartDate(request.startDate().toLocalDate());
         reservation.setEndDate(request.endDate().toLocalDate());
         reservation.setBasePrice(price);
+        reservation.setCarModel(car.getCarModel());
+
+        reservation.setStatus("CONFIRMED");
 
         List<Addon> addons = addonRepository.findAllById(request.addonIds());
                 
