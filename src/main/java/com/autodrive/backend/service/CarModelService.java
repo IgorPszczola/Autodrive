@@ -36,12 +36,10 @@ public class CarModelService {
         carModel.getBrand(),
         carModel.getModel(),
         carModel.getSegment(),
-        carModel.getProductionYear(),
         carModel.getPricePerDay(),
         carModel.getDepositAmount(),
         carModel.getMileageLimitPerDay(),
         carModel.getExtraMileageFee(),
-        carModel.getImageUrl(),
         carModel.getPowerHp(),
         carModel.getTransmissionType(),
         carModel.getFuelType()

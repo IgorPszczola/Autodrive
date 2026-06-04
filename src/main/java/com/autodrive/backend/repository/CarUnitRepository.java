@@ -10,5 +10,7 @@ import org.springframework.stereotype.Repository;
 public interface CarUnitRepository extends JpaRepository<CarUnit, Integer> {
 
     List<CarUnit> findByCarModel_Id(Integer modelId);
+
+    long countByCarModelIdAndStatusNot(Integer carModelId, String status);
     
 }

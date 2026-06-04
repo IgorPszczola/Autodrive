@@ -7,12 +7,10 @@ public record CarModelResponse(
     String brand,
     String model,
     String segment,
-    Integer productionYear,
     BigDecimal pricePerDay,
     BigDecimal depositAmount,
     Integer mileageLimitPerDay,
     BigDecimal extraMileageFee,
-    String imageUrl,
     Integer powerHp,
     String transmissionType,
     String fuelType

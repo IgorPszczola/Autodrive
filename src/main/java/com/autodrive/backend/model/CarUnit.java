@@ -36,4 +36,10 @@ public class CarUnit {
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "car_model_id")
 	private CarModel carModel;
+
+	@Column(name = "image_url", length = 255)
+	private String imageUrl;
+
+	@Column(name = "production_year", nullable = false)
+	private Integer productionYear;
 }

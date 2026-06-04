@@ -6,5 +6,7 @@ public record CarUnitResponse(
     String vin,
     String licensePlate,
     String color,
+    Integer productionYear,
+    String imageUrl,
     String status
 ) {}

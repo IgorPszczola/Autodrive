@@ -28,6 +28,8 @@ public class CarUnitService {
             carUnit.getVin(),
             carUnit.getLicensePlate(),
             carUnit.getColor(),
+            carUnit.getProductionYear(),
+            carUnit.getImageUrl(),
             carUnit.getStatus()
         )).toList();
     }

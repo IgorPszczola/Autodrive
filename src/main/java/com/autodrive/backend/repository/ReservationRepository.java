@@ -24,4 +24,13 @@ public interface ReservationRepository extends JpaRepository<Reservation, Intege
         @Param("startDate") LocalDate startDate, 
         @Param("endDate") LocalDate endDate
     );
+
+    @Query("SELECT COUNT(r) FROM Reservation r WHERE r.carModel.id = :modelId " +
+       "AND r.status != 'CANCELLED' " +
+       "AND (:startDate < r.endDate AND :endDate > r.startDate)")
+    long countOverlappingReservations(
+        @Param("modelId") Integer modelId, 
+        @Param("startDate") LocalDate startDate, 
+        @Param("endDate") LocalDate endDate
+    );
 }

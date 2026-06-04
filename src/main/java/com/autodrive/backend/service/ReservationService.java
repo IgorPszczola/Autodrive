@@ -11,11 +11,13 @@ import org.springframework.stereotype.Service;
 
 import com.autodrive.backend.dto.ReservationRequest;
 import com.autodrive.backend.model.Addon;
+import com.autodrive.backend.model.CarModel;
 import com.autodrive.backend.model.CarUnit;
 import com.autodrive.backend.model.InsuranceVariant;
 import com.autodrive.backend.model.Reservation;
 import com.autodrive.backend.model.User;
 import com.autodrive.backend.repository.AddonRepository;
+import com.autodrive.backend.repository.CarModelRepository;
 import com.autodrive.backend.repository.CarUnitRepository;
 import com.autodrive.backend.repository.InsuranceVariantRepository;
 import com.autodrive.backend.repository.ReservationRepository;
@@ -31,13 +33,15 @@ public class ReservationService {
     private final CarUnitRepository carUnitRepository;
     private final AddonRepository addonRepository;
     private final InsuranceVariantRepository insuranceVariantRepository;
+    private final CarModelRepository carModelRepository;
     
-    public ReservationService(ReservationRepository reservationRepository, UserRepository userRepository, CarUnitRepository carUnitRepository, AddonRepository addonRepository, InsuranceVariantRepository insuranceVariantRepository) {
+    public ReservationService(ReservationRepository reservationRepository, UserRepository userRepository, CarUnitRepository carUnitRepository, AddonRepository addonRepository, InsuranceVariantRepository insuranceVariantRepository, CarModelRepository carModelRepository) {
         this.reservationRepository = reservationRepository;
         this.userRepository = userRepository;
         this.carUnitRepository = carUnitRepository;
         this.addonRepository = addonRepository;
         this.insuranceVariantRepository = insuranceVariantRepository;
+        this.carModelRepository = carModelRepository;
     }
 
 
@@ -48,86 +52,81 @@ public class ReservationService {
     
 
     @Transactional
-    public Reservation makeReservation(Integer carUnitID, String email, ReservationRequest request){
-        
-        if (request.startDate().isAfter(request.endDate())) {
-            throw new IllegalArgumentException("Start date cannot be after end date");
-        }
+public Reservation makeReservation(Integer carModelId, String email, ReservationRequest request) {
 
-        LocalDate requestedStartDate = request.startDate().toLocalDate();
-        LocalDate requestedEndDate = request.endDate().toLocalDate();
+    User user = userRepository.findByEmail(email)
+            .orElseThrow(() -> new RuntimeException("User not found"));
 
-        boolean isOccupied = reservationRepository.existsCollision(carUnitID, requestedStartDate, requestedEndDate);
-        if (isOccupied) {
-            throw new IllegalStateException("Ten samochód jest już zarezerwowany w wybranym terminie!");
-        }
+    CarModel carModel = carModelRepository.findById(carModelId)
+            .orElseThrow(() -> new RuntimeException("Car model not found"));
 
-        User user = getUserByEmail(email);
-        
-        CarUnit car = carUnitRepository.findById(carUnitID)
-            .orElseThrow(() -> new RuntimeException("Car unit not found"));
+    LocalDate requestedStartDate = request.startDate().toLocalDate();
+    LocalDate requestedEndDate = request.endDate().toLocalDate();
+    
+    if (requestedStartDate.isAfter(requestedEndDate)) {
+        throw new IllegalArgumentException("Start date cannot be after end date");
+    }
 
-        if ("MAINTENANCE".equals(car.getStatus())) {
-            throw new IllegalStateException("Samochód jest obecnie wyłączony z użytku (serwis).");
-        }
+    long totalFleetCount = carUnitRepository.countByCarModelIdAndStatusNot(carModelId, "IN_REPAIR");
+    long activeReservationsCount = reservationRepository.countOverlappingReservations(
+            carModelId, requestedStartDate, requestedEndDate
+    );
 
-        long days = ChronoUnit.DAYS.between(request.startDate(), request.endDate());
-        if (days == 0) {
-            days = 1;
-        }
-        BigDecimal price = car.getCarModel().getPricePerDay().multiply(BigDecimal.valueOf(days));
+    if (activeReservationsCount >= totalFleetCount) {
+        throw new IllegalStateException("Brak dostępnych samochodów tego modelu w wybranym terminie!");
+    }
 
-        price = price.add(car.getCarModel().getDepositAmount());
+    long days = ChronoUnit.DAYS.between(requestedStartDate, requestedEndDate);
+    if (days == 0) {
+        days = 1;
+    }
 
-        Reservation reservation = new Reservation();
-        reservation.setUser(user);
-        reservation.setCarUnit(car);
-        reservation.setStartDate(request.startDate().toLocalDate());
-        reservation.setEndDate(request.endDate().toLocalDate());
-        reservation.setBasePrice(price);
-        reservation.setCarModel(car.getCarModel());
+    BigDecimal baseVehiclePrice = carModel.getPricePerDay().multiply(BigDecimal.valueOf(days));
+    BigDecimal currentTotalPrice = baseVehiclePrice.add(carModel.getDepositAmount());
 
-        reservation.setStatus("CONFIRMED");
+    Reservation reservation = new Reservation();
+    reservation.setUser(user);
+    reservation.setCarModel(carModel);
+    reservation.setCarUnit(null);
+    reservation.setStartDate(requestedStartDate);
+    reservation.setEndDate(requestedEndDate);
+    reservation.setStatus("CONFIRMED");
 
+    if (request.insuranceVariantId() == null) {
+        throw new IllegalArgumentException("You have to choose an insurance variant");
+    }
 
-        if (request.insuranceVariantId() == null) {
-            throw new IllegalArgumentException("You have to choose an insurance variant");
-        }
-
-        InsuranceVariant insurance = insuranceVariantRepository.findById(request.insuranceVariantId())
+    InsuranceVariant insurance = insuranceVariantRepository.findById(request.insuranceVariantId())
             .orElseThrow(() -> new RuntimeException("Insurance variant not found"));
 
-        reservation.setInsuranceVariant(insurance);
+    reservation.setInsuranceVariant(insurance);
+    
+    BigDecimal insuranceCost = insurance.getPricePerDay().multiply(BigDecimal.valueOf(days));
+    currentTotalPrice = currentTotalPrice.add(insuranceCost);
 
-        BigDecimal insuranceCost = insurance.getPricePerDay().multiply(BigDecimal.valueOf(days));
-
-        price = price.add(insuranceCost);
-
-
-        List<Addon> addons = addonRepository.findAllById(request.addonIds());
-                
-        for (Addon addon : addons) {
-            reservation.getAddons().add(addon);
-            BigDecimal addonCost = addon.getPricePerDay().multiply(BigDecimal.valueOf(days));
-            reservation.setBasePrice(reservation.getBasePrice().add(addonCost));
-            price = price.add(addonCost);
-        }
-
-        int currentOrderNumber = user.getNumOfReservations() + 1;
-
-        double discount = 0.0;
-        if (currentOrderNumber % 5 == 0){
-            discount = 10.0;
-            price = price.multiply(BigDecimal.valueOf(0.9));
-        }
-
-        reservation.setDiscountApplied(discount);
-        reservation.setTotalPrice(price);
-
-        user.setNumOfReservations(currentOrderNumber);
-
-        reservationRepository.save(reservation);
-        return reservation;
+    List<Addon> addons = addonRepository.findAllById(request.addonIds());
+    for (Addon addon : addons) {
+        reservation.getAddons().add(addon);
+        BigDecimal addonCost = addon.getPricePerDay().multiply(BigDecimal.valueOf(days));
+        currentTotalPrice = currentTotalPrice.add(addonCost);
     }
+
+    reservation.setBasePrice(baseVehiclePrice);
+
+    int currentOrderNumber = user.getNumOfReservations() + 1;
+    double discount = 0.0;
+    
+    if (currentOrderNumber % 5 == 0) {
+        discount = 10.0;
+        currentTotalPrice = currentTotalPrice.multiply(BigDecimal.valueOf(0.9));
+    }
+
+    reservation.setDiscountApplied(discount);
+    reservation.setTotalPrice(currentTotalPrice);
+    
+    user.setNumOfReservations(currentOrderNumber);
+
+    return reservationRepository.save(reservation);
+}
 
 }

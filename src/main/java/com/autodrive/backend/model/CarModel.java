@@ -29,8 +29,6 @@ public class CarModel {
 	@Column(nullable = false, length = 10)
 	private String segment;
 
-	@Column(name = "production_year", nullable = false)
-	private Integer productionYear;
 	@Column(name = "price_per_day", nullable = false, precision = 10, scale = 2)
 	private BigDecimal pricePerDay;
 
@@ -42,9 +40,6 @@ public class CarModel {
 
 	@Column(name = "extra_mileage_fee", nullable = false, precision = 10, scale = 2)
 	private BigDecimal extraMileageFee;
-
-	@Column(name = "image_url", length = 255)
-	private String imageUrl;
 
 	@Column(name = "power_hp", nullable = false)
 	private Integer powerHp;
