@@ -57,7 +57,7 @@ public class Reservation {
     private CarModel carModel;
 
     @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "car_unit_id", nullable = false)
+    @JoinColumn(name = "car_unit_id")
     private CarUnit carUnit;
 
     @ManyToMany(fetch = FetchType.EAGER)

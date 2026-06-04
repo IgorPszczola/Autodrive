@@ -3,7 +3,9 @@ package com.autodrive.backend.controller;
 import java.security.Principal;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -24,31 +26,32 @@ public class ReservationController {
     }
 
     @PostMapping
-    public ResponseEntity<ReservationResponse> createReservation(
-            @RequestParam Integer carUnitId,
-            @RequestBody ReservationRequest request,
-            Principal principal
-    ) {
-        String email = principal.getName();
+public ResponseEntity<ReservationResponse> createReservation(
+        @RequestParam Integer carModelId,
+        @RequestBody ReservationRequest request,
+        Principal principal
+) {
+    String email = principal.getName();
 
-        Reservation res = reservationService.makeReservation(carUnitId, email, request);
+    Reservation res = reservationService.makeReservation(carModelId, email, request);
 
-        ReservationResponse response = new ReservationResponse(
-        res.getId(),
-        res.getStartDate(),
-        res.getEndDate(),
-        res.getBasePrice(),
-        res.getDiscountApplied(),
-        res.getTotalPrice(),
-        res.getStatus(),
-        res.getCreatedAt(),
-        res.getUser().getEmail(),
-        res.getCarModel().getBrand(),
-        res.getCarModel().getModel(),
-        res.getCarUnit().getLicensePlate(),
-        res.getInsuranceVariant().getName()
+    ReservationResponse response = new ReservationResponse(
+            res.getId(),
+            res.getStartDate(),
+            res.getEndDate(),
+            res.getBasePrice(),
+            res.getDiscountApplied(),
+            res.getTotalPrice(),
+            res.getStatus(),
+            res.getCreatedAt(),
+            res.getUser().getEmail(),
+            res.getCarModel().getBrand(),
+            res.getCarModel().getModel(),
+            res.getCarUnit() != null ? res.getCarUnit().getLicensePlate() : null, 
+            res.getInsuranceVariant().getName()
     );
 
-        return ResponseEntity.ok(response);
-    }
+    return ResponseEntity.ok(response);
+}
+
 }

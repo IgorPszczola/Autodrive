@@ -41,7 +41,7 @@ public class AuthService {
 
         String encodedPassword = passwordEncoder.encode(request.password());
         user.setPasswordHash(encodedPassword);
-
+        user.setNumOfReservations(0);
         userRepository.save(user);
 
         return "User registered successfully";
