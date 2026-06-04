@@ -33,4 +33,6 @@ public interface ReservationRepository extends JpaRepository<Reservation, Intege
         @Param("startDate") LocalDate startDate, 
         @Param("endDate") LocalDate endDate
     );
+
+    List<Reservation> findByUserEmailOrderByCreatedAtDesc(String email);
 }

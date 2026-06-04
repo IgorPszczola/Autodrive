@@ -71,7 +71,7 @@ public class ReservationService {
         );
 
         if (activeReservationsCount >= totalFleetCount) {
-            throw new IllegalStateException("Brak dostępnych samochodów tego modelu w wybranym terminie!");
+            throw new IllegalStateException("No available cars of this model for the selected dates!");
         }
 
         long days = ChronoUnit.DAYS.between(requestedStartDate, requestedEndDate);
@@ -163,20 +163,18 @@ public class ReservationService {
                 .orElseThrow(() -> new RuntimeException("Reservation not found"));
 
         if (!"ACTIVE".equals(reservation.getStatus())) {
-            throw new IllegalStateException("Nie można zwrócić samochodu dla rezerwacji, która nie jest aktywna!");
+            throw new IllegalStateException("Cannot return a car for a reservation that is not active!");
         }
 
         CarUnit carUnit = reservation.getCarUnit();
         CarModel carModel = reservation.getCarModel();
 
-        // 1. Kalkulacja kilometrów
         Long startMileage = carUnit.getCurrentMileage();
         Long drivenDistance = endMileage - startMileage;
 
         long days = java.time.temporal.ChronoUnit.DAYS.between(reservation.getStartDate(), reservation.getEndDate());
         if (days == 0) days = 1;
 
-        // Dozwolony limit: limit_na_dzien * dni
         Long allowedMileage = carModel.getMileageLimitPerDay() * (long) days;
         BigDecimal extraMileageCost = BigDecimal.ZERO;
 
@@ -185,10 +183,8 @@ public class ReservationService {
             extraMileageCost = BigDecimal.valueOf(extraKm).multiply(carModel.getExtraMileageFee());
         }
 
-        // 2. Całkowita dopłata (kilometry + rysy)
         BigDecimal totalSurcharge = extraMileageCost.add(damageCost);
 
-        // 3. Generowanie raportu
         ReturnReport report = new ReturnReport();
         report.setReservation(reservation);
         report.setReturnDate(LocalDate.now());
@@ -198,7 +194,6 @@ public class ReservationService {
         report.setTotalSurcharge(totalSurcharge.doubleValue());
         report.setDamageDescription(damageDescription);
 
-        // 4. Aktualizacja obiektów
         reservation.setStatus("COMPLETED");
         carUnit.setCurrentMileage(endMileage.longValue());
         
@@ -211,6 +206,44 @@ public class ReservationService {
         reservationRepository.save(reservation);
         carUnitRepository.save(carUnit);
         return returnReportRepository.save(report);
+    }
+
+    public List<Reservation> getMyReservations(String email) {
+        return reservationRepository.findByUserEmailOrderByCreatedAtDesc(email);
+    }
+
+    @Transactional
+    public void cancelReservation(Integer reservationId, String email) {
+        Reservation reservation = reservationRepository.findById(reservationId)
+            .orElseThrow(() -> new RuntimeException("Reservation not found"));
+
+        
+        if (!reservation.getUser().getEmail().equals(email)) {
+            throw new IllegalStateException("You do not have permission to cancel this reservation!");
+        }
+
+
+        if (!"PENDING".equals(reservation.getStatus()) && !"CONFIRMED".equals(reservation.getStatus())) {
+            throw new IllegalStateException("Cannot cancel a reservation with status: " + reservation.getStatus());
+        }
+
+    
+        if (reservation.getStartDate().isBefore(java.time.LocalDate.now())) {
+            throw new IllegalStateException("Cannot cancel a reservation that has already started!");
+        }
+
+    
+        reservation.setStatus("CANCELLED");
+
+    
+        if (reservation.getCarUnit() != null) {
+            com.autodrive.backend.model.CarUnit unit = reservation.getCarUnit();
+            unit.setStatus("AVAILABLE");
+            carUnitRepository.save(unit);
+            reservation.setCarUnit(null);
+        }
+
+        reservationRepository.save(reservation);
     }
 
 }

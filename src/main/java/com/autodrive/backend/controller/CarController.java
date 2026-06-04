@@ -1,16 +1,19 @@
 package com.autodrive.backend.controller;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.autodrive.backend.dto.CarModelResponse;
 import com.autodrive.backend.dto.CarUnitResponse;
 import com.autodrive.backend.dto.TerminResponse;
+import com.autodrive.backend.model.CarModel;
 import com.autodrive.backend.service.CarModelService;
 import com.autodrive.backend.service.CarUnitService;
 
@@ -27,8 +30,16 @@ public class CarController {
     }
 
     @GetMapping("/models")
-    public List<CarModelResponse> allCarModels() {
-        return carModelService.allCarModels();
+    public ResponseEntity<List<CarModel>> getModels(
+            @RequestParam(required = false) String brand,
+            @RequestParam(required = false) String fuelType,
+            @RequestParam(required = false) BigDecimal maxPrice,
+            @RequestParam(defaultValue = "pricePerDay") String sortBy,
+            @RequestParam(defaultValue = "asc") String sortDir
+    ) {
+
+        List<CarModel> models = carModelService.getFilteredModels(brand, fuelType, maxPrice, sortBy, sortDir);
+        return ResponseEntity.ok(models);
     }
 
     @GetMapping("/models/{id}")
