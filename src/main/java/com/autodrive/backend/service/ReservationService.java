@@ -9,6 +9,7 @@ import java.util.List;
 
 import org.springframework.stereotype.Service;
 
+import com.autodrive.backend.dto.DashboardStatsResponse;
 import com.autodrive.backend.dto.ReservationRequest;
 import com.autodrive.backend.model.Addon;
 import com.autodrive.backend.model.CarModel;
@@ -248,5 +249,37 @@ public class ReservationService {
 
         reservationRepository.save(reservation);
     }
+
+
+    public DashboardStatsResponse getDashboardStats() {
+
+    List<Reservation> validReservations = reservationRepository.findAll().stream()
+            .filter(r -> !r.getStatus().equals("CANCELLED"))
+            .toList();
+
+    BigDecimal totalEarnings = validReservations.stream()
+            .map(Reservation::getTotalPrice)
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+    long totalReservationsCount = validReservations.size();
+
+    long totalFleetCount = carUnitRepository.count();
+    long activeRentalsCount = carUnitRepository.countByStatus("RENTED");
+
+    long fleetInRepairCount = carUnitRepository.countByStatus("IN_REPAIR") + carUnitRepository.countByStatus("MAINTENANCE");
+
+    double fleetUtilizationRate = 0.0;
+    if (totalFleetCount > 0) {
+        fleetUtilizationRate = ((double) activeRentalsCount / totalFleetCount) * 100.0;
+    }
+
+    return new DashboardStatsResponse(
+            totalEarnings,
+            totalReservationsCount,
+            activeRentalsCount,
+            fleetInRepairCount,
+            Math.round(fleetUtilizationRate * 100.0) / 100.0
+    );
+}
 
 }
