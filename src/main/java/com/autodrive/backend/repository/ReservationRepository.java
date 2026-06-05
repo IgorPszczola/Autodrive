@@ -35,4 +35,6 @@ public interface ReservationRepository extends JpaRepository<Reservation, Intege
     );
 
     List<Reservation> findByUserEmailOrderByCreatedAtDesc(String email);
+
+    boolean existsByCarModelIdAndUserEmailAndStatus(Integer carModelId, String userEmail, String status);
 }
