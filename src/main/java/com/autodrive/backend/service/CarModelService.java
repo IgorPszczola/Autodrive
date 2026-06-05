@@ -5,9 +5,10 @@ import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.autodrive.backend.repository.CarModelRepository;
-
+import com.autodrive.backend.dto.CarModelRequest;
 import com.autodrive.backend.dto.CarModelResponse;
 import com.autodrive.backend.model.CarModel;
 
@@ -52,17 +53,39 @@ public class CarModelService {
 
     private CarModelResponse mapToDto(CarModel carModel) {
         return new CarModelResponse(
-        carModel.getId(),
-        carModel.getBrand(),
-        carModel.getModel(),
-        carModel.getSegment(),
-        carModel.getPricePerDay(),
-        carModel.getDepositAmount(),
-        carModel.getMileageLimitPerDay(),
-        carModel.getExtraMileageFee(),
-        carModel.getPowerHp(),
-        carModel.getTransmissionType(),
-        carModel.getFuelType()
-    );
+            carModel.getId(),
+            carModel.getBrand(),
+            carModel.getModel(),
+            carModel.getSegment(),
+            carModel.getPricePerDay(),
+            carModel.getDepositAmount(),
+            carModel.getMileageLimitPerDay(),
+            carModel.getExtraMileageFee(),
+            carModel.getPowerHp(),
+            carModel.getTransmissionType(),
+            carModel.getFuelType()
+        );
+    }
+
+    @Transactional
+    public CarModelResponse addCarModel(CarModelRequest request) {
+        if (request.brand() == null || request.model() == null || request.pricePerDay() == null) {
+            throw new IllegalArgumentException("Brand, model and price per day are strictly required");
+        }
+
+        CarModel carModel = new CarModel();
+        carModel.setBrand(request.brand());
+        carModel.setModel(request.model());
+        carModel.setSegment(request.segment());
+        carModel.setPricePerDay(request.pricePerDay());
+        carModel.setDepositAmount(request.depositAmount());
+        carModel.setMileageLimitPerDay(request.mileageLimitPerDay());
+        carModel.setExtraMileageFee(request.extraMileageFee());
+        carModel.setPowerHp(request.powerHp());
+        carModel.setTransmissionType(request.transmissionType());
+        carModel.setFuelType(request.fuelType());
+
+        CarModel saved = carModelRepository.save(carModel);
+        return mapToDto(saved);
     }
 }

@@ -65,7 +65,7 @@ public class ReservationService {
             throw new IllegalArgumentException("Start date cannot be after end date");
         }
 
-        long totalFleetCount = carUnitRepository.countByCarModelIdAndStatusNot(carModelId, "IN_REPAIR");
+        long totalFleetCount = carUnitRepository.countByCarModelIdAndStatus(carModelId, "AVAILABLE");
         long activeReservationsCount = reservationRepository.countOverlappingReservations(
                 carModelId, requestedStartDate, requestedEndDate
         );

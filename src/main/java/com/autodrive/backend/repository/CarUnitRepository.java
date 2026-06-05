@@ -11,7 +11,7 @@ public interface CarUnitRepository extends JpaRepository<CarUnit, Integer> {
 
     List<CarUnit> findByCarModel_Id(Integer modelId);
 
-    long countByCarModelIdAndStatusNot(Integer carModelId, String status);
+    long countByCarModelIdAndStatus(Integer carModelId, String status);
 
     List<CarUnit> findByCarModelIdAndStatus(Integer carModelId, String status);
     

@@ -1,6 +1,6 @@
 #FileLock
-#Fri Jun 05 14:52:54 CEST 2026
+#Fri Jun 05 18:54:03 CEST 2026
 hostName=IgorPszczola
-id=19e97d7dfc1e8159d1cd4775ed93c439d0400a8fa03
+id=19e98b4a54591531e993f7d7ecee11e9c4b47e28ae0
 method=file
-server=172.24.128.1\:57424
+server=172.24.128.1\:53184

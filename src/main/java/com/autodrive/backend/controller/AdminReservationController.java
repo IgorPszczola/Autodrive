@@ -17,6 +17,6 @@ public class AdminReservationController {
     @PutMapping("/{reservationId}/assign-unit")
     public ResponseEntity<String> assignUnit(@PathVariable Integer reservationId) {
         reservationService.assignFirstAvailableCarUnit(reservationId);
-        return ResponseEntity.ok("System automatycznie znalazł sprawny egzemplarz i przypisał go do rezerwacji.");
+        return ResponseEntity.ok("System assigned a car unit to the reservation.");
     }
 }

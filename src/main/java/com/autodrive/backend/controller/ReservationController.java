@@ -28,16 +28,17 @@ public class ReservationController {
     }
 
     @PostMapping
-    public ResponseEntity<ReservationResponse> createReservation(
+    public ResponseEntity<?> createReservation(
             @RequestParam Integer carModelId,
             @RequestBody ReservationRequest request,
             Principal principal
     ) {
-        String email = principal.getName();
+        try{
+            String email = principal.getName();
 
-        Reservation res = reservationService.makeReservation(carModelId, email, request);
+            Reservation res = reservationService.makeReservation(carModelId, email, request);
 
-        ReservationResponse response = new ReservationResponse(
+            ReservationResponse response = new ReservationResponse(
                 res.getId(),
                 res.getStartDate(),
                 res.getEndDate(),
@@ -52,9 +53,13 @@ public class ReservationController {
                 res.getCarModel().getModel(),
                 res.getCarUnit() != null ? res.getCarUnit().getLicensePlate() : null, 
                 res.getInsuranceVariant().getName()
-        );
-
-        return ResponseEntity.ok(response);
+            );
+            return ResponseEntity.ok(response);
+        } catch (IllegalStateException | IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        } catch (RuntimeException e) {
+           return ResponseEntity.internalServerError().body("Unknown error occurred: " + e.getMessage());
+        }
     }
 
     @GetMapping("/my")
@@ -84,6 +89,6 @@ public class ReservationController {
     @PutMapping("/{id}/cancel")
     public ResponseEntity<String> cancelReservation(@PathVariable Integer id, Principal principal) {
         reservationService.cancelReservation(id, principal.getName());
-        return ResponseEntity.ok("Rezerwacja została pomyślnie anulowana, a ewentualny pojazd zwolniony.");
+        return ResponseEntity.ok("Reservation canceled successfully.");
     }
 }
