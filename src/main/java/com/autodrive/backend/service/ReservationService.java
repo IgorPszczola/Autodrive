@@ -9,6 +9,8 @@ import java.util.List;
 
 import org.springframework.stereotype.Service;
 
+import com.autodrive.backend.dto.CarRequestReturn;
+import com.autodrive.backend.dto.CarReturnResponse;
 import com.autodrive.backend.dto.DashboardStatsResponse;
 import com.autodrive.backend.dto.ReservationRequest;
 import com.autodrive.backend.model.Addon;
@@ -149,68 +151,13 @@ public class ReservationService {
         CarUnit assignedCar = availableUnits.get((int) (Math.random() * availableUnits.size()));
 
         reservation.setCarUnit(assignedCar);
-        reservation.setStatus("ACTIVE"); 
-        
+        reservation.setStatus("RENTED");
         assignedCar.setStatus("RENTED");
 
         reservationRepository.save(reservation);
         carUnitRepository.save(assignedCar);
     }
 
-    @Transactional
-    public ReturnReport processReturn(Integer reservationId, Integer endMileage, BigDecimal damageCost, String damageDescription) {
-        Reservation reservation = reservationRepository.findById(reservationId)
-                .orElseThrow(() -> new RuntimeException("Reservation not found"));
-
-        if (!"ACTIVE".equals(reservation.getStatus())) {
-            throw new IllegalStateException("Cannot return a car for a reservation that is not active!");
-        }
-
-        CarUnit carUnit = reservation.getCarUnit();
-        CarModel carModel = reservation.getCarModel();
-
-        Long startMileage = carUnit.getCurrentMileage();
-        Long drivenDistance = endMileage - startMileage;
-
-        long days = java.time.temporal.ChronoUnit.DAYS.between(reservation.getStartDate(), reservation.getEndDate());
-        if (days == 0) days = 1;
-
-        Long allowedMileage = carModel.getMileageLimitPerDay() * (long) days;
-        BigDecimal extraMileageCost = BigDecimal.ZERO;
-
-        if (drivenDistance > allowedMileage) {
-            Long extraKm = drivenDistance - allowedMileage;
-            extraMileageCost = BigDecimal.valueOf(extraKm).multiply(carModel.getExtraMileageFee());
-        }
-
-        BigDecimal totalSurcharge = extraMileageCost.add(damageCost);
-
-        ReturnReport report = new ReturnReport();
-        report.setReservation(reservation);
-        report.setReturnDate(LocalDate.now());
-        report.setEndMileage(endMileage);
-        report.setExtraMileageCost(extraMileageCost.doubleValue());
-        report.setDamageCost(damageCost.doubleValue());
-        report.setTotalSurcharge(totalSurcharge.doubleValue());
-        report.setDamageDescription(damageDescription);
-
-        reservation.setStatus("COMPLETED");
-        User user = reservation.getUser();
-        int completedCount = user.getNumOfReservations() == null ? 0 : user.getNumOfReservations();
-        user.setNumOfReservations(completedCount + 1);
-        carUnit.setCurrentMileage(endMileage.longValue());
-        
-        if (damageCost.compareTo(BigDecimal.ZERO) > 0) {
-            carUnit.setStatus("IN_REPAIR");
-        } else {
-            carUnit.setStatus("AVAILABLE");
-        }
-
-        reservationRepository.save(reservation);
-        userRepository.save(user);
-        carUnitRepository.save(carUnit);
-        return returnReportRepository.save(report);
-    }
 
     public List<Reservation> getMyReservations(String email) {
         return reservationRepository.findByUserEmailOrderByCreatedAtDesc(email);
@@ -253,33 +200,115 @@ public class ReservationService {
 
     public DashboardStatsResponse getDashboardStats() {
 
-    List<Reservation> validReservations = reservationRepository.findAll().stream()
-            .filter(r -> !r.getStatus().equals("CANCELLED"))
-            .toList();
+        List<Reservation> validReservations = reservationRepository.findAll().stream()
+                .filter(r -> !r.getStatus().equals("CANCELLED"))
+                .toList();
 
-    BigDecimal totalEarnings = validReservations.stream()
-            .map(Reservation::getTotalPrice)
-            .reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal totalEarnings = validReservations.stream()
+                .map(Reservation::getTotalPrice)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-    long totalReservationsCount = validReservations.size();
+        long totalReservationsCount = validReservations.size();
 
-    long totalFleetCount = carUnitRepository.count();
-    long activeRentalsCount = carUnitRepository.countByStatus("RENTED");
+        long totalFleetCount = carUnitRepository.count();
+        long activeRentalsCount = carUnitRepository.countByStatus("RENTED");
 
-    long fleetInRepairCount = carUnitRepository.countByStatus("IN_REPAIR") + carUnitRepository.countByStatus("MAINTENANCE");
+        long fleetInRepairCount = carUnitRepository.countByStatus("IN_REPAIR") + carUnitRepository.countByStatus("MAINTENANCE");
 
-    double fleetUtilizationRate = 0.0;
-    if (totalFleetCount > 0) {
-        fleetUtilizationRate = ((double) activeRentalsCount / totalFleetCount) * 100.0;
+        double fleetUtilizationRate = 0.0;
+        if (totalFleetCount > 0) {
+            fleetUtilizationRate = ((double) activeRentalsCount / totalFleetCount) * 100.0;
+        }
+
+        return new DashboardStatsResponse(
+                totalEarnings,
+                totalReservationsCount,
+                activeRentalsCount,
+                fleetInRepairCount,
+                Math.round(fleetUtilizationRate * 100.0) / 100.0
+        );
     }
 
-    return new DashboardStatsResponse(
-            totalEarnings,
-            totalReservationsCount,
-            activeRentalsCount,
-            fleetInRepairCount,
-            Math.round(fleetUtilizationRate * 100.0) / 100.0
-    );
-}
+    @Transactional
+    public CarReturnResponse processCarReturn(Integer reservationId, CarRequestReturn request) {
+
+        Reservation reservation = reservationRepository.findById(reservationId)
+            .orElseThrow(() -> new RuntimeException("Reservation not found"));
+        
+        if (!reservation.getStatus().equals("RENTED")){
+            throw new IllegalStateException("Only reservations with RENTED status can be processed for return");
+        }    
+        
+        CarUnit carUnit = reservation.getCarUnit();
+        if (carUnit == null) {
+            throw new IllegalStateException("This reservation does not have a car assigned!");
+        }
+
+
+        if (request.currentMileage() < carUnit.getCurrentMileage()) {
+            throw new IllegalArgumentException("Current mileage cannot be lower than the starting mileage (" + carUnit.getCurrentMileage() + " km)!");
+        }
+
+        long distanceTraveled = request.currentMileage() - carUnit.getCurrentMileage();
+        carUnit.setCurrentMileage(request.currentMileage());
+
+        long rentalDays = ChronoUnit.DAYS.between(reservation.getStartDate(), reservation.getEndDate());
+        if (rentalDays == 0) rentalDays = 1;
+
+        
+        Long allowedMileage = reservation.getCarModel().getMileageLimitPerDay() * rentalDays;
+        BigDecimal extraFee = BigDecimal.ZERO;
+
+        if (distanceTraveled > allowedMileage) {
+            long exceededKm = distanceTraveled - allowedMileage;
+            BigDecimal feePerKm = reservation.getCarModel().getExtraMileageFee();
+            extraFee = BigDecimal.valueOf(exceededKm).multiply(feePerKm);
+            
+            reservation.setTotalPrice(reservation.getTotalPrice().add(extraFee));
+        }
+
+        ReturnReport returnReport = new ReturnReport();
+        returnReport.setReservation(reservation);
+        returnReport.setReturnDate(LocalDate.now());
+        returnReport.setEndMileage(request.currentMileage());
+        returnReport.setExtraMileageCost(extraFee.doubleValue());
+
+        double damageCostValue = 0.0;
+        if (request.isDamaged()) {
+            carUnit.setStatus("IN_REPAIR");
+            damageCostValue = request.damageCost() != null ? request.damageCost().doubleValue() : 0.0;
+            returnReport.setDamageDescription(request.damageNotes() != null ? request.damageNotes() : "No damage description provided");
+            returnReport.setDamageCost(damageCostValue);
+        } else {
+            carUnit.setStatus("AVAILABLE");
+            returnReport.setDamageCost(0.0);
+        }
+
+        double totalSurchargeValue = extraFee.doubleValue() + damageCostValue;
+        returnReport.setTotalSurcharge(totalSurchargeValue);
+
+        reservation.setStatus("COMPLETED");
+
+        returnReportRepository.save(returnReport);
+        Reservation savedReservation = reservationRepository.save(reservation);
+
+        return new CarReturnResponse(
+            savedReservation.getId(),
+            savedReservation.getStatus(),
+            returnReport.getReturnDate(),
+            returnReport.getEndMileage(),
+            returnReport.getExtraMileageCost(),
+            (double) distanceTraveled,
+            returnReport.getDamageCost(),
+            returnReport.getDamageDescription(),
+            savedReservation.getTotalPrice()
+        );
+    
+    }
+
+    public ReturnReport getReturnReportByReservationId(Integer reservationId) {
+        return returnReportRepository.findByReservationId(reservationId)
+            .orElseThrow(() -> new RuntimeException("Return report not found for reservation id: " + reservationId));
+    }
 
 }

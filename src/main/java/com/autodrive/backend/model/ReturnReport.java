@@ -26,7 +26,7 @@ public class ReturnReport {
     private LocalDate returnDate;
     
     @Column(name = "end_mileage")
-    private Integer endMileage;
+    private Long endMileage;
     
     @Column(name = "extra_mileage_cost")
     private Double extraMileageCost;
