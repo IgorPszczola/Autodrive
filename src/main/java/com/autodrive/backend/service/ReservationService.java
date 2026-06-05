@@ -80,7 +80,7 @@ public class ReservationService {
         }
 
         BigDecimal baseVehiclePrice = carModel.getPricePerDay().multiply(BigDecimal.valueOf(days));
-        BigDecimal currentTotalPrice = baseVehiclePrice.add(carModel.getDepositAmount());
+        BigDecimal currentTotalPrice = baseVehiclePrice;
 
         Reservation reservation = new Reservation();
         reservation.setUser(user);
@@ -111,7 +111,8 @@ public class ReservationService {
 
         reservation.setBasePrice(baseVehiclePrice);
 
-        int currentOrderNumber = user.getNumOfReservations() + 1;
+        long completedReservationsCount = reservationRepository.countByUserIdAndStatusNot(user.getId(), "CANCELLED");
+        long currentOrderNumber = completedReservationsCount + 1;
         double discount = 0.0;
         
         if (currentOrderNumber % 5 == 0) {
@@ -121,8 +122,6 @@ public class ReservationService {
 
         reservation.setDiscountApplied(discount);
         reservation.setTotalPrice(currentTotalPrice);
-        
-        user.setNumOfReservations(currentOrderNumber);
 
         return reservationRepository.save(reservation);
     }
@@ -195,6 +194,9 @@ public class ReservationService {
         report.setDamageDescription(damageDescription);
 
         reservation.setStatus("COMPLETED");
+        User user = reservation.getUser();
+        int completedCount = user.getNumOfReservations() == null ? 0 : user.getNumOfReservations();
+        user.setNumOfReservations(completedCount + 1);
         carUnit.setCurrentMileage(endMileage.longValue());
         
         if (damageCost.compareTo(BigDecimal.ZERO) > 0) {
@@ -204,6 +206,7 @@ public class ReservationService {
         }
 
         reservationRepository.save(reservation);
+        userRepository.save(user);
         carUnitRepository.save(carUnit);
         return returnReportRepository.save(report);
     }

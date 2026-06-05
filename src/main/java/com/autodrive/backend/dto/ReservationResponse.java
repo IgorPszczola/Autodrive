@@ -11,6 +11,7 @@ public record ReservationResponse(
     BigDecimal basePrice,
     Double discountApplied,
     BigDecimal totalPrice,
+    BigDecimal depositAmount,
     String status,
     LocalDateTime createdAt,
     String userEmail,

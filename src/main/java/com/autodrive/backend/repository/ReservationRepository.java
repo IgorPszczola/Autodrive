@@ -13,7 +13,7 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface ReservationRepository extends JpaRepository<Reservation, Integer> {
     
-    long countByUserIdAndStatus(Integer userId, String status);
+    long countByUserIdAndStatusNot(Integer userId, String status);
 
     List<Reservation> findByCarUnitId(Long carUnitId);
 
