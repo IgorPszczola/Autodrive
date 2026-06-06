@@ -37,10 +37,15 @@ public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         .csrf(csrf -> csrf.disable())
         .sessionManagement(management -> management.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
         .authorizeHttpRequests(auth -> auth
-            .requestMatchers("/api/auth/**", "/api/models/**", "/h2-console/**", "/error", "/api/cars/**").permitAll()
-            .requestMatchers("/api/admin/**").hasRole("ADMIN")
-            .anyRequest().authenticated()
-        ) 
+        .requestMatchers(
+            "/api/auth/**",
+            "/api/cars/models/**",
+            "/v3/api-docs/**",
+            "/swagger-ui/**",
+            "/swagger-ui.html"
+        ).permitAll()
+        .anyRequest().authenticated()
+)
         .headers(headers -> headers.frameOptions(frame -> frame.disable())) 
         .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class); 
 
