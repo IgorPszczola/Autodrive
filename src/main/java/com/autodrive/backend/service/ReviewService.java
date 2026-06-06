@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.autodrive.backend.dto.ReviewRequest;
+import com.autodrive.backend.dto.ReviewResponse;
 import com.autodrive.backend.model.CarModel;
 import com.autodrive.backend.model.Review;
 import com.autodrive.backend.model.User;
@@ -30,20 +31,16 @@ public class ReviewService {
         this.userRepository = userRepository;
     }
 
-    public List<Review> getReviewsForModel(Integer carModelId) {
-        return reviewRepository.findByCarModelIdOrderByCreatedAtDesc(carModelId);
-    }
-
     @Transactional
-    public Review addReview(ReviewRequest request, String email) {
+    public ReviewResponse addReview(ReviewRequest request, String email) {
 
-        // boolean hasCompletedRent = reservationRepository.existsByCarModelIdAndUserEmailAndStatus(
-        //         request.carModelId(), email, "COMPLETED"
-        // );
+        boolean hasCompletedRent = reservationRepository.existsByCarModelIdAndUserEmailAndStatus(
+                request.carModelId(), email, "COMPLETED"
+        );
 
-        // if (!hasCompletedRent) {
-        //     throw new IllegalStateException("You cannot post a review for a model you haven't rented and returned.");
-        // }
+        if (!hasCompletedRent) {
+            throw new IllegalStateException("You cannot post a review for a model you haven't rented and returned.");
+        }
 
         if (request.rating() < 1 || request.rating() > 5) {
             throw new IllegalArgumentException("Rating must be between 1 and 5.");
@@ -61,6 +58,34 @@ public class ReviewService {
         review.setRating(request.rating());
         review.setComment(request.comment());
 
-        return reviewRepository.save(review);
+        Review savedReview = reviewRepository.save(review);
+
+        String fullModelName = carModel.getBrand() + " " + carModel.getModel();
+
+        return new ReviewResponse(
+                savedReview.getId(),
+                carModel.getId(),
+                fullModelName,
+                user.getEmail(),
+                savedReview.getRating(),
+                savedReview.getComment(),
+                savedReview.getCreatedAt()
+        );
+    }
+
+    public List<ReviewResponse> getReviewsForModel(Integer carModelId) {
+        return reviewRepository.findByCarModelIdOrderByCreatedAtDesc(carModelId).stream()
+                .map(r -> {
+                    String fullModelName = r.getCarModel().getBrand() + " " + r.getCarModel().getModel();
+                    return new ReviewResponse(
+                            r.getId(),
+                            r.getCarModel().getId(),
+                            fullModelName,
+                            r.getUser().getEmail(),
+                            r.getRating(),
+                            r.getComment(),
+                            r.getCreatedAt()
+                    );
+                }).toList();
     }
 }

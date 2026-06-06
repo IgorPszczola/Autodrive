@@ -2,6 +2,7 @@ package com.autodrive.backend.controller;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -30,37 +31,67 @@ public class CarController {
     }
 
     @GetMapping("/models")
-    public ResponseEntity<List<CarModel>> getModels(
+    public ResponseEntity<?> getModels(
             @RequestParam(required = false) String brand,
             @RequestParam(required = false) String fuelType,
             @RequestParam(required = false) BigDecimal maxPrice,
             @RequestParam(defaultValue = "pricePerDay") String sortBy,
             @RequestParam(defaultValue = "asc") String sortDir
     ) {
-
-        List<CarModel> models = carModelService.getFilteredModels(brand, fuelType, maxPrice, sortBy, sortDir);
-        return ResponseEntity.ok(models);
+        try {
+            List<CarModel> models = carModelService.getFilteredModels(brand, fuelType, maxPrice, sortBy, sortDir);
+            return ResponseEntity.ok(models);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of(
+                "status", 400,
+                "error", e.getMessage()
+            ));
+        }
     }
 
     @GetMapping("/models/{id}")
-    public ResponseEntity<CarModelResponse> getCarModelById(@PathVariable Integer id){
-        CarModelResponse response = carModelService.getCarModelById(id);
-        if (response != null) {
-            return ResponseEntity.ok(response);
-        } else {
-            return ResponseEntity.notFound().build();
+    public ResponseEntity<?> getCarModelById(@PathVariable Integer id){
+        try {
+            CarModelResponse response = carModelService.getCarModelById(id);
+            if (response != null) {
+                return ResponseEntity.ok(response);
+            } else {
+                return ResponseEntity.status(404).body(Map.of(
+                    "status", 404,
+                    "error", "Car model not found with id: " + id
+                ));
+            }
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of(
+                "status", 400,
+                "error", e.getMessage()
+            ));
         }
     }
 
     @GetMapping("/models/{id}/units")
-    public ResponseEntity<List<CarUnitResponse>> getCarUnitsByModelId(@PathVariable Integer id){
-        List<CarUnitResponse> units = carUnitService.getCarUnitsByModelId(id);
-        return ResponseEntity.ok(units);
+    public ResponseEntity<?> getCarUnitsByModelId(@PathVariable Integer id){
+        try {
+            List<CarUnitResponse> units = carUnitService.getCarUnitsByModelId(id);
+            return ResponseEntity.ok(units);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of(
+                "status", 400,
+                "error", e.getMessage()
+            ));
+        }
     }
 
     @GetMapping("/units/{carUnitId}/occupied-dates")
-    public ResponseEntity<List<TerminResponse>> getCarOccupiedDates(@PathVariable Long carUnitId) {
-        List<TerminResponse> dates = carUnitService.getOccupiedDatesForCar(carUnitId);
-        return ResponseEntity.ok(dates);
+    public ResponseEntity<?> getCarOccupiedDates(@PathVariable Long carUnitId) {
+        try {
+            List<TerminResponse> dates = carUnitService.getOccupiedDatesForCar(carUnitId);
+            return ResponseEntity.ok(dates);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of(
+                "status", 400,
+                "error", e.getMessage()
+            ));
+        }
     }
 }

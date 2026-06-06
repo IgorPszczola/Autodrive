@@ -2,6 +2,7 @@ package com.autodrive.backend.controller;
 
 import java.security.Principal;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -33,62 +34,67 @@ public class ReservationController {
             @RequestBody ReservationRequest request,
             Principal principal
     ) {
-        try{
+        try {
             String email = principal.getName();
-
             Reservation res = reservationService.makeReservation(carModelId, email, request);
-
-            ReservationResponse response = new ReservationResponse(
-                res.getId(),
-                res.getStartDate(),
-                res.getEndDate(),
-                res.getBasePrice(),
-                res.getDiscountApplied(),
-                res.getTotalPrice(),
-                res.getCarModel().getDepositAmount(),
-                res.getStatus(),
-                res.getCreatedAt(),
-                res.getUser().getEmail(),
-                res.getCarModel().getBrand(),
-                res.getCarModel().getModel(),
-                res.getCarUnit() != null ? res.getCarUnit().getLicensePlate() : null, 
-                res.getInsuranceVariant().getName()
-            );
-            return ResponseEntity.ok(response);
+            return ResponseEntity.ok(res);
         } catch (IllegalStateException | IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
+            return ResponseEntity.badRequest().body(Map.of(
+                "status", 400,
+                "error", e.getMessage()
+            ));
         } catch (RuntimeException e) {
-           return ResponseEntity.internalServerError().body("Unknown error occurred: " + e.getMessage());
+            return ResponseEntity.internalServerError().body(Map.of(
+                "status", 500,
+                "error", "Unknown error occurred: " + e.getMessage()
+            ));
         }
     }
 
     @GetMapping("/my")
-    public ResponseEntity<List<ReservationResponse>> getMyReservations(Principal principal) {
-        List<Reservation> reservations = reservationService.getMyReservations(principal.getName());
-        
-        List<ReservationResponse> response = reservations.stream().map(res -> new ReservationResponse(
-                res.getId(),
-                res.getStartDate(),
-                res.getEndDate(),
-                res.getBasePrice(),
-                res.getDiscountApplied(),
-                res.getTotalPrice(),
-                res.getCarModel().getDepositAmount(),
-                res.getStatus(),
-                res.getCreatedAt(),
-                res.getUser().getEmail(),
-                res.getCarModel().getBrand(),
-                res.getCarModel().getModel(),
-                res.getCarUnit() != null ? res.getCarUnit().getLicensePlate() : null,
-                res.getInsuranceVariant().getName()
-        )).toList();
+    public ResponseEntity<?> getMyReservations(Principal principal) {
+        try {
+            List<Reservation> reservations = reservationService.getMyReservations(principal.getName());
+            
+            List<ReservationResponse> response = reservations.stream().map(res -> new ReservationResponse(
+                    res.getId(),
+                    res.getStartDate(),
+                    res.getEndDate(),
+                    res.getBasePrice(),
+                    res.getDiscountApplied(),
+                    res.getTotalPrice(),
+                    res.getCarModel().getDepositAmount(),
+                    res.getStatus(),
+                    res.getCreatedAt(),
+                    res.getUser().getEmail(),
+                    res.getCarModel().getBrand(),
+                    res.getCarModel().getModel(),
+                    res.getCarUnit() != null ? res.getCarUnit().getLicensePlate() : null,
+                    res.getInsuranceVariant().getName()
+            )).toList();
 
-        return ResponseEntity.ok(response);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of(
+                "status", 400,
+                "error", e.getMessage()
+            ));
+        }
     }
 
     @PutMapping("/{id}/cancel")
-    public ResponseEntity<String> cancelReservation(@PathVariable Integer id, Principal principal) {
-        reservationService.cancelReservation(id, principal.getName());
-        return ResponseEntity.ok("Reservation canceled successfully.");
+    public ResponseEntity<?> cancelReservation(@PathVariable Integer id, Principal principal) {
+        try {
+            reservationService.cancelReservation(id, principal.getName());
+            return ResponseEntity.ok(Map.of(
+                "status", 200,
+                "message", "Reservation canceled successfully."
+            ));
+        } catch (IllegalStateException | IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of(
+                "status", 400,
+                "error", e.getMessage()
+            ));
+        }
     }
 }
