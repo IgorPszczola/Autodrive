@@ -1,0 +1,38 @@
+version: '3.8'
+
+services:
+  postgres-db:
+    image: postgres:15-alpine
+    container_name: autodrive-postgres
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_DB=autodrive
+      - POSTGRES_USER=autodrive_user
+      - POSTGRES_PASSWORD=autodrive_pass
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - autodrive-network
+
+  backend-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: autodrive-backend
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres-db:5432/autodrive
+      - SPRING_DATASOURCE_USERNAME=autodrive_user
+      - SPRING_DATASOURCE_PASSWORD=autodrive_pass
+    depends_on:
+      - postgres-db
+    networks:
+      - autodrive-network
+
+volumes:
+  postgres_data:
+
+networks:
+  autodrive-network:
