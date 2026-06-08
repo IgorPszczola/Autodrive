@@ -14,8 +14,8 @@ import org.springframework.stereotype.Repository;
 public interface CarModelRepository extends JpaRepository<CarModel, Integer>{
     
     @Query("SELECT cm FROM CarModel cm WHERE " +
-           "(:brand IS NULL OR LOWER(cm.brand) LIKE LOWER(CONCAT('%', :brand, '%'))) AND " +
-           "(:fuelType IS NULL OR cm.fuelType = :fuelType) AND " +
+           "(CAST(:brand AS string) IS NULL OR LOWER(cm.brand) LIKE LOWER(CONCAT('%', CAST(:brand AS string), '%'))) AND " +
+           "(CAST(:fuelType AS string) IS NULL OR cm.fuelType = CAST(:fuelType AS string)) AND " +
            "(:maxPrice IS NULL OR cm.pricePerDay <= :maxPrice)")
     List<CarModel> findFiltered(
             @Param("brand") String brand,

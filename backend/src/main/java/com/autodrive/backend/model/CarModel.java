@@ -6,6 +6,9 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import java.math.BigDecimal;
+import java.sql.Types;
+
+import org.hibernate.annotations.JdbcTypeCode;
 
 
 @Entity
@@ -21,12 +24,15 @@ public class CarModel {
 	private Integer id;
 
 	@Column(name = "brand", nullable = false, columnDefinition = "varchar(100)")
+	@JdbcTypeCode(Types.VARCHAR)
 	private String brand;
 
 	@Column(name = "model", nullable = false, columnDefinition = "varchar(50)")
+	@JdbcTypeCode(Types.VARCHAR)
 	private String model;
 
 	@Column(name = "segment", nullable = false, columnDefinition = "varchar(10)")
+	@JdbcTypeCode(Types.VARCHAR)
 	private String segment;
 
 	@Column(name = "price_per_day", nullable = false, precision = 10, scale = 2)
@@ -45,8 +51,10 @@ public class CarModel {
 	private Integer powerHp;
 
 	@Column(name = "transmission_type", nullable = false, columnDefinition = "varchar(20)")
+	@JdbcTypeCode(Types.VARCHAR)
 	private String transmissionType;
 
 	@Column(name = "fuel_type", nullable = false, columnDefinition = "varchar(50)")
+	@JdbcTypeCode(Types.VARCHAR)
 	private String fuelType;
 }
