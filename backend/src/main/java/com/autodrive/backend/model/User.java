@@ -38,8 +38,8 @@ public class User {
     @Column(name = "driver_license_number", nullable = false, length = 100)
     private String driverLicenseNumber;
 
-    @Column(name = "is_active", nullable = false)
-    private char isActive;
+    @Column(name = "is_active", nullable = false, columnDefinition = "boolean")
+    private boolean isActive = true;
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)

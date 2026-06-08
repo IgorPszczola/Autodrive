@@ -20,13 +20,13 @@ public class CarModel {
 	@Column(name = "car_model_id")
 	private Integer id;
 
-	@Column(nullable = false)
+	@Column(name = "brand", nullable = false, columnDefinition = "varchar(100)")
 	private String brand;
 
-	@Column(name = "model", nullable = false, length = 50)
+	@Column(name = "model", nullable = false, columnDefinition = "varchar(50)")
 	private String model;
 
-	@Column(nullable = false, length = 10)
+	@Column(name = "segment", nullable = false, columnDefinition = "varchar(10)")
 	private String segment;
 
 	@Column(name = "price_per_day", nullable = false, precision = 10, scale = 2)
@@ -44,9 +44,9 @@ public class CarModel {
 	@Column(name = "power_hp", nullable = false)
 	private Integer powerHp;
 
-	@Column(name = "transmission_type", nullable = false, length = 20)
+	@Column(name = "transmission_type", nullable = false, columnDefinition = "varchar(20)")
 	private String transmissionType;
 
-	@Column(name = "fuel_type", length = 20)
+	@Column(name = "fuel_type", nullable = false, columnDefinition = "varchar(50)")
 	private String fuelType;
 }
