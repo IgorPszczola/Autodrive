@@ -2,17 +2,17 @@ package com.autodrive.backend.service;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.stereotype.Service;
 
+import com.autodrive.backend.dto.AddonResponse;
 import com.autodrive.backend.dto.CarRequestReturn;
 import com.autodrive.backend.dto.CarReturnResponse;
 import com.autodrive.backend.dto.DashboardStatsResponse;
 import com.autodrive.backend.dto.ReservationRequest;
+import com.autodrive.backend.dto.ReservationResponse;
 import com.autodrive.backend.model.Addon;
 import com.autodrive.backend.model.CarModel;
 import com.autodrive.backend.model.CarUnit;
@@ -309,6 +309,34 @@ public class ReservationService {
     public ReturnReport getReturnReportByReservationId(Integer reservationId) {
         return returnReportRepository.findByReservationId(reservationId)
             .orElseThrow(() -> new RuntimeException("Return report not found for reservation id: " + reservationId));
+    }
+
+
+  public List<ReservationResponse> getAllReservations() {
+        return reservationRepository.findAll().stream()
+            .map(reservation -> new ReservationResponse(
+                reservation.getId(),
+                reservation.getStartDate(),
+                reservation.getEndDate(),
+                reservation.getBasePrice(),
+                reservation.getDiscountApplied(),
+                reservation.getTotalPrice(),
+                reservation.getCarModel() != null ? reservation.getCarModel().getDepositAmount() : BigDecimal.ZERO,
+                reservation.getStatus(),
+                reservation.getCreatedAt(),
+                reservation.getUser().getEmail(),
+                reservation.getCarModel().getBrand(),
+                reservation.getCarModel().getModel(),
+                reservation.getCarUnit() != null ? reservation.getCarUnit().getLicensePlate() : null,
+                reservation.getInsuranceVariant() != null ? reservation.getInsuranceVariant().getName() : null,
+                reservation.getAddons().stream().map(addon -> new AddonResponse(
+                    addon.getId(),
+                    addon.getName(),
+                    addon.getDescription(),
+                    addon.getPricePerDay()
+                )).toList()
+            ))
+            .toList();
     }
 
 }

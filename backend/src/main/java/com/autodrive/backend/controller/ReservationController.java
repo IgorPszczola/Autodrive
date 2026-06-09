@@ -18,6 +18,7 @@ import com.autodrive.backend.dto.ReservationRequest;
 import com.autodrive.backend.dto.ReservationResponse;
 import com.autodrive.backend.model.Reservation;
 import com.autodrive.backend.service.ReservationService;
+import com.autodrive.backend.dto.AddonResponse;
 
 @RestController
 @RequestMapping("/api/reservations")
@@ -70,7 +71,13 @@ public class ReservationController {
                     res.getCarModel().getBrand(),
                     res.getCarModel().getModel(),
                     res.getCarUnit() != null ? res.getCarUnit().getLicensePlate() : null,
-                    res.getInsuranceVariant().getName()
+                    res.getInsuranceVariant().getName(),
+                    res.getAddons().stream().map(addon -> new AddonResponse(
+                        addon.getId(),
+                        addon.getName(),
+                        addon.getDescription(),
+                        addon.getPricePerDay()
+                    )).toList()
             )).toList();
 
             return ResponseEntity.ok(response);

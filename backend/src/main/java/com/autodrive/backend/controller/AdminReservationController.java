@@ -2,9 +2,11 @@ package com.autodrive.backend.controller;
 
 import com.autodrive.backend.dto.CarRequestReturn;
 import com.autodrive.backend.dto.CarReturnResponse;
+import com.autodrive.backend.dto.ReservationResponse;
 import com.autodrive.backend.model.ReturnReport;
 import com.autodrive.backend.service.ReservationService;
 
+import java.util.List;
 import java.util.Map;
 
 import org.springframework.http.ResponseEntity;
@@ -49,5 +51,11 @@ public class AdminReservationController {
         // Zakładam, że masz taką metodę w serwisie lub repozytorium:
         ReturnReport report = reservationService.getReturnReportByReservationId(reservationId);
         return ResponseEntity.ok(report);
+    }
+
+    @GetMapping("/all")
+    public ResponseEntity<List<ReservationResponse>> getAllReservations() {
+        List<ReservationResponse> reservations = reservationService.getAllReservations();
+        return ResponseEntity.ok(reservations);
     }
 }
