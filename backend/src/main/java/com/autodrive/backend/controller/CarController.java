@@ -35,11 +35,12 @@ public class CarController {
             @RequestParam(required = false) String brand,
             @RequestParam(required = false) String fuelType,
             @RequestParam(required = false) BigDecimal maxPrice,
+            @RequestParam(required = false) String segment,
             @RequestParam(defaultValue = "pricePerDay") String sortBy,
             @RequestParam(defaultValue = "asc") String sortDir
     ) {
         try {
-            List<CarModel> models = carModelService.getFilteredModels(brand, fuelType, maxPrice, sortBy, sortDir);
+            List<CarModel> models = carModelService.getFilteredModels(brand, fuelType, maxPrice, segment, sortBy, sortDir);
             return ResponseEntity.ok(models);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of(

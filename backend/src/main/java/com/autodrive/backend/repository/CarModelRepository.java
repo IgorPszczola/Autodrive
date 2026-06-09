@@ -16,11 +16,13 @@ public interface CarModelRepository extends JpaRepository<CarModel, Integer>{
     @Query("SELECT cm FROM CarModel cm WHERE " +
            "(CAST(:brand AS string) IS NULL OR LOWER(cm.brand) LIKE LOWER(CONCAT('%', CAST(:brand AS string), '%'))) AND " +
            "(CAST(:fuelType AS string) IS NULL OR cm.fuelType = CAST(:fuelType AS string)) AND " +
-           "(:maxPrice IS NULL OR cm.pricePerDay <= :maxPrice)")
+           "(:maxPrice IS NULL OR cm.pricePerDay <= :maxPrice) AND " +
+           "(CAST(:segment AS string) IS NULL OR cm.segment = CAST(:segment AS string))")
     List<CarModel> findFiltered(
             @Param("brand") String brand,
             @Param("fuelType") String fuelType,
             @Param("maxPrice") BigDecimal maxPrice,
+            @Param("segment") String segment,
             Sort sort
     );
 }
