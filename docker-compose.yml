@@ -1,0 +1,58 @@
+services:
+  postgres-db:
+    image: postgres:15-alpine
+    container_name: autodrive-postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - autodrive-network
+    restart: unless-stopped
+
+  backend-app:
+    container_name: autodrive-backend
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-db:5432/${DB_NAME}
+      SPRING_DATASOURCE_USERNAME: ${DB_USER}
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD}
+      AUTODRIVE_APP_JWTSECRET: ${JWT_SECRET}
+      AUTODRIVE_APP_JWTEXPIRATIONMS: ${JWT_EXPIRATION}
+    depends_on:
+      - postgres-db
+    networks:
+      - autodrive-network
+    restart: unless-stopped
+
+  autodrive-frontend:
+    container_name: autodrive-frontend
+    build:
+      context: ./frontend/nuxt
+      dockerfile: Dockerfile
+      args:
+        NUXT_PUBLIC_BACKEND_URL: http://backend-app:8080
+    ports:
+      - "3000:3000"
+    environment:
+      NUXT_PUBLIC_BACKEND_URL: http://backend-app:8080
+    depends_on:
+      - backend-app
+    networks:
+      - autodrive-network
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+
+networks:
+  autodrive-network:
+    driver: bridge
