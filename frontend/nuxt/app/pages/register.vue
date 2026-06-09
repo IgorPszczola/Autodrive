@@ -27,7 +27,7 @@ async function submit() {
     || !form.driverLicenseNumber.trim()
     || !form.phoneNumber.trim()
   ) {
-    errorMessage.value = 'Uzupelnij wszystkie wymagane pola formularza.'
+    errorMessage.value = 'Uzupełnij wszystkie wymagane pola formularza.'
     return
   }
 
@@ -42,11 +42,11 @@ async function submit() {
       driverLicenseNumber: form.driverLicenseNumber,
       phoneNumber: form.phoneNumber,
     })
-    successMessage.value = 'Rejestracja zakonczona sukcesem. Mozesz sie zalogowac.'
+    successMessage.value = 'Rejestracja zakończona sukcesem. Możesz się zalogować.'
     await router.push('/login')
   }
   catch (error) {
-    errorMessage.value = error instanceof Error ? error.message : 'Rejestracja nie powiodla sie'
+    errorMessage.value = error instanceof Error ? error.message : 'Rejestracja nie powiodła się'
   }
   finally {
     loading.value = false
@@ -64,7 +64,7 @@ async function submit() {
             <v-col cols="12" md="6">
               <v-text-field
                 v-model="form.firstName"
-                label="Imie"
+                label="Imię"
                 required
               />
             </v-col>
@@ -85,7 +85,7 @@ async function submit() {
           />
           <v-text-field
             v-model="form.password"
-            label="Haslo"
+            label="Hasło"
             type="password"
             required
           />
@@ -124,13 +124,13 @@ async function submit() {
             :loading="loading"
             block
           >
-            Utworz konto
+            Utwórz konto
           </v-btn>
         </v-form>
       </v-card-text>
       <v-card-actions>
         <v-btn to="/login" variant="text">
-          Masz juz konto? Zaloguj sie
+          Masz już konto? Zaloguj się
         </v-btn>
       </v-card-actions>
     </v-card>

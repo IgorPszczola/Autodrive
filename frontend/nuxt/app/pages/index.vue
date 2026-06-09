@@ -5,35 +5,35 @@ const heroImageUrl = 'https://images.unsplash.com/photo-1492144534655-ae79c964c9
 
 const highlights = [
   {
-    title: 'Dostepnosc na zywo',
-    text: 'Widzisz auta, ktore faktycznie mozna zarezerwowac na wybrany termin.',
+    title: 'Dostępność na żywo',
+    text: 'Widzisz auta, które faktycznie można zarezerwować na wybrany termin.',
   },
   {
     title: 'Jasne koszty',
-    text: 'Cena wypozyczenia i dodatkow jest czytelna jeszcze przed finalnym krokiem.',
+    text: 'Cena wypożyczenia i dodatków jest czytelna jeszcze przed finalnym krokiem.',
   },
   {
-    title: 'Szybki odbior',
+    title: 'Szybki odbiór',
     text: 'Po potwierdzeniu rezerwacji proces wydania auta jest prosty i przewidywalny.',
   },
 ]
 
 const quickActions = [
   {
-    title: 'Przegladaj modele',
-    text: 'Porownaj segmenty, skrzynie i ceny dzienne w jednym miejscu.',
+    title: 'Przeglądaj modele',
+    text: 'Porównaj segmenty, skrzynie i ceny dzienne w jednym miejscu.',
     to: '/cars',
-    cta: 'Otworz katalog',
+    cta: 'Otwórz katalog',
   },
   {
     title: 'Nowa rezerwacja',
     text: 'Wybierz daty i dodatki, a system od razu policzy podsumowanie.',
     to: '/client/reservations/new',
-    cta: 'Przejdz do formularza',
+    cta: 'Przejdź do formularza',
   },
   {
     title: 'Strefa klienta',
-    text: 'Sprawdz statusy, historie najmu i zarzadzaj swoim kontem.',
+    text: 'Sprawdź statusy, historię najmu i zarządzaj swoim kontem.',
     to: '/client/account',
     cta: 'Zobacz konto',
   },
@@ -52,16 +52,16 @@ const quickActions = [
           <h1 class="text-3xl md:text-4xl font-weight-bold mb-4">
             Rezerwuj auto szybciej,
             <br>
-            jedz pewniej.
+            jedź pewniej.
           </h1>
 
           <p class="text-base text-medium-emphasis mb-6">
-            Nowoczesna wypozyczalnia online: sprawdzasz modele, wybierasz termin i zarzadzasz rezerwacja bez zbednych krokow.
+            Nowoczesna wypożyczalnia online: sprawdzasz modele, wybierasz termin i zarządzasz rezerwacją bez zbędnych kroków.
           </p>
 
           <div class="d-flex flex-wrap ga-3">
             <v-btn to="/cars" color="primary" size="large" variant="flat">
-              Sprawdz katalog
+              Sprawdź katalog
             </v-btn>
             <v-btn
               v-if="!isAuthenticated"
@@ -69,7 +69,7 @@ const quickActions = [
               size="large"
               variant="outlined"
             >
-              Zaloguj sie
+              Zaloguj się
             </v-btn>
             <v-btn
               v-else
@@ -77,7 +77,7 @@ const quickActions = [
               size="large"
               variant="outlined"
             >
-              Przejdz do konta
+              Przejdź do konta
             </v-btn>
           </div>
         </v-card>
@@ -118,7 +118,7 @@ const quickActions = [
             Gotowy na kolejny wyjazd?
           </h2>
           <p class="text-medium-emphasis mb-0">
-            Zobacz dostepne modele i zablokuj termin zanim zrobi to ktos inny.
+            Zobacz dostępne modele i zablokuj termin zanim zrobi to ktoś inny.
           </p>
         </div>
         <v-btn to="/cars" color="primary" size="large" variant="flat">

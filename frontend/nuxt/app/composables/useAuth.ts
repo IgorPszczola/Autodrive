@@ -24,8 +24,8 @@ interface AuthUser {
 }
 
 type AuthResponse = Record<string, unknown>
-const INACTIVE_ACCOUNT_MESSAGE = 'Konto jest nieaktywne. Skontaktuj sie z administratorem.'
-const FORBIDDEN_PROFILE_MESSAGE = 'Brak dostepu do profilu uzytkownika (403).'
+const INACTIVE_ACCOUNT_MESSAGE = 'Konto jest nieaktywne. Skontaktuj się z administratorem.'
+const FORBIDDEN_PROFILE_MESSAGE = 'Brak dostępu do profilu użytkownika (403).'
 
 let initializeAuthPromise: Promise<void> | null = null
 
@@ -160,7 +160,7 @@ export function useAuth() {
       const statusCode = getErrorStatusCode(error)
 
       if (statusCode === 401) {
-        clearAuthState('Sesja wygasla. Zaloguj sie ponownie.')
+        clearAuthState('Sesja wygasła. Zaloguj się ponownie.')
       }
 
       if (statusCode === 403) {
@@ -169,7 +169,7 @@ export function useAuth() {
 
       throw error instanceof Error
         ? error
-        : new Error('Nie udalo sie pobrac danych uzytkownika.')
+        : new Error('Nie udało się pobrać danych użytkownika.')
     }
   }
 
@@ -213,7 +213,7 @@ export function useAuth() {
     }
     catch (error) {
       const message = getErrorMessage(error)
-      throw new Error(message ?? 'Logowanie nie powiodlo sie.')
+      throw new Error(message ?? 'Logowanie nie powiodło się.')
     }
 
     const parsedToken = extractToken(response)

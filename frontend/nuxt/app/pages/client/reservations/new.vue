@@ -26,17 +26,15 @@ const form = reactive({
   startDate: getLocalDate(0),
   endDate: getLocalDate(1),
   insuranceVariantId: 0,
-  addonIdsText: '',
+  addonIds: [] as number[],
 })
 
 const models = ref<Array<Record<string, any>>>([])
 const insuranceVariants = ref<Array<Record<string, any>>>([])
+const addons = ref<Array<Record<string, any>>>([])
 
 const selectedModel = computed(() => models.value.find(model => model.id === form.carModelId) || null)
-const selectedAddonIds = computed(() => form.addonIdsText
-  .split(',')
-  .map(item => Number(item.trim()))
-  .filter(item => Number.isFinite(item) && item > 0))
+const selectedAddons = computed(() => addons.value.filter(addon => form.addonIds.includes(addon.id)))
 
 const daysCount = computed(() => {
   if (!form.startDate || !form.endDate) {
@@ -66,7 +64,11 @@ const estimatedInsurance = computed(() => {
   return Number(selected.pricePerDay || 0) * daysCount.value
 })
 
-const estimatedTotal = computed(() => estimatedBase.value + estimatedInsurance.value)
+const estimatedAddons = computed(() => selectedAddons.value.reduce((total, addon) => {
+  return total + Number(addon.pricePerDay || 0) * daysCount.value
+}, 0))
+
+const estimatedTotal = computed(() => estimatedBase.value + estimatedInsurance.value + estimatedAddons.value)
 const showSubmitButton = computed(() => isMounted.value && Number(step.value) >= 3)
 
 function getModelLabel(model: Record<string, any>): string {
@@ -78,13 +80,15 @@ async function loadData() {
   errorMessage.value = ''
 
   try {
-    const [modelsData, insuranceData] = await Promise.all([
+    const [modelsData, insuranceData, addonData] = await Promise.all([
       rentalApi.getCarModels(),
       rentalApi.getInsuranceVariants(),
+      rentalApi.getAddons(),
     ])
 
     models.value = modelsData
     insuranceVariants.value = insuranceData
+    addons.value = addonData
 
     if (!form.carModelId && modelsData[0]) {
       form.carModelId = modelsData[0].id
@@ -95,7 +99,7 @@ async function loadData() {
     }
   }
   catch (error) {
-    errorMessage.value = error instanceof Error ? error.message : 'Nie udalo sie pobrac danych kreatora'
+    errorMessage.value = error instanceof Error ? error.message : 'Nie udało się pobrać danych kreatora'
   }
   finally {
     loading.value = false
@@ -104,7 +108,7 @@ async function loadData() {
 
 async function submitReservation() {
   if (!form.startDate || !form.endDate) {
-    errorMessage.value = 'Uzupelnij date rozpoczecia i zakonczenia rezerwacji.'
+    errorMessage.value = 'Uzupełnij datę rozpoczęcia i zakończenia rezerwacji.'
     return
   }
 
@@ -119,7 +123,7 @@ async function submitReservation() {
   }
 
   if (new Date(form.endDate).getTime() < new Date(form.startDate).getTime()) {
-    errorMessage.value = 'Data zakonczenia nie moze byc wczesniejsza niz data rozpoczecia.'
+    errorMessage.value = 'Data zakończenia nie może być wcześniejsza niż data rozpoczęcia.'
     return
   }
 
@@ -132,15 +136,15 @@ async function submitReservation() {
       id: 0,
       startDate: form.startDate,
       endDate: form.endDate,
-      addonIds: selectedAddonIds.value,
+      addonIds: form.addonIds,
       insuranceVariantId: form.insuranceVariantId,
     })
 
-    successMessage.value = 'Rezerwacja zostala utworzona.'
+    successMessage.value = 'Rezerwacja została utworzona.'
     await router.push('/client/account')
   }
   catch (error) {
-    errorMessage.value = error instanceof Error ? error.message : 'Nie udalo sie utworzyc rezerwacji'
+    errorMessage.value = error instanceof Error ? error.message : 'Nie udało się utworzyć rezerwacji'
   }
   finally {
     submitting.value = false
@@ -159,7 +163,7 @@ onMounted(async () => {
       Kreator rezerwacji
     </h1>
     <p class="text-medium-emphasis mb-6">
-      Krok 1: Daty, Krok 2: Dodatki i ubezpieczenie, Krok 3: Podsumowanie kosztow.
+      Krok 1: Daty, Krok 2: Dodatki i ubezpieczenie, Krok 3: Podsumowanie kosztów.
     </p>
 
     <v-alert v-if="errorMessage" type="error" variant="tonal" class="mb-4">
@@ -186,7 +190,7 @@ onMounted(async () => {
                   <v-list-item
                     v-bind="props"
                     :subtitle="item?.raw
-                      ? `${item.raw.brand} • ${item.raw.pricePerDay} PLN / dzien`
+                      ? `${item.raw.brand} • ${item.raw.pricePerDay} PLN / dzień`
                       : ''"
                   />
                 </template>
@@ -206,12 +210,26 @@ onMounted(async () => {
                 label="Ubezpieczenie"
                 :loading="loading"
               />
-              <v-text-field
-                v-model="form.addonIdsText"
-                label="Dodatki (ID po przecinku)"
-                hint="Przyklad: 1,2"
-                persistent-hint
-              />
+              <v-select
+                v-model="form.addonIds"
+                :items="addons"
+                item-title="name"
+                item-value="id"
+                label="Dodatki"
+                multiple
+                chips
+                clearable
+                :loading="loading"
+              >
+                <template #item="{ props, item }">
+                  <v-list-item
+                    v-bind="props"
+                    :subtitle="item?.raw
+                      ? `${item.raw.description} • ${item.raw.pricePerDay} PLN / dzień`
+                      : ''"
+                  />
+                </template>
+              </v-select>
             </div>
           </template>
 
@@ -222,13 +240,14 @@ onMounted(async () => {
                   <v-list-item title="Model" :subtitle="selectedModel ? `${selectedModel.brand} ${selectedModel.model}` : '-'" />
                   <v-list-item title="Termin" :subtitle="`${form.startDate || '-'} → ${form.endDate || '-'}`" />
                   <v-list-item title="Liczba dni" :subtitle="String(daysCount)" />
-                  <v-list-item title="Dodatki" :subtitle="selectedAddonIds.length ? selectedAddonIds.join(', ') : 'Brak'" />
+                  <v-list-item title="Dodatki" :subtitle="selectedAddons.length ? selectedAddons.map(addon => addon.name).join(', ') : 'Brak'" />
                 </v-list>
               </v-col>
               <v-col cols="12" md="6">
                 <v-sheet class="rounded-lg p-4 border" color="transparent">
                   <p class="mb-1 text-sm">Bazowo: {{ estimatedBase }} PLN</p>
                   <p class="mb-1 text-sm">Ubezpieczenie: {{ estimatedInsurance }} PLN</p>
+                  <p class="mb-1 text-sm">Dodatki: {{ estimatedAddons }} PLN</p>
                   <p class="text-xl font-weight-medium">Razem: {{ estimatedTotal }} PLN</p>
                 </v-sheet>
               </v-col>
@@ -251,7 +270,7 @@ onMounted(async () => {
           :loading="submitting"
           @click="submitReservation"
         >
-          Potwierdz i rezerwuj
+          Potwierdź i rezerwuj
         </v-btn>
       </v-card-actions>
     </v-card>

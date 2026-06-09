@@ -59,7 +59,7 @@ async function loadUnits() {
     }
   }
   catch (error) {
-    errorMessage.value = error instanceof Error ? error.message : 'Nie udalo sie pobrac danych floty'
+    errorMessage.value = error instanceof Error ? error.message : 'Nie udało się pobrać danych floty'
   }
   finally {
     loading.value = false
@@ -76,7 +76,7 @@ async function createUnit() {
     || newUnit.currentMileage < 0
     || newUnit.productionYear < 1900
   ) {
-    errorMessage.value = 'Uzupelnij poprawnie wszystkie pola pojazdu.'
+    errorMessage.value = 'Uzupełnij poprawnie wszystkie pola pojazdu.'
     return
   }
 
@@ -91,11 +91,11 @@ async function createUnit() {
       imageUrl: newUnit.imageUrl,
     })
 
-    successMessage.value = 'Pojazd zostal dodany do floty.'
+    successMessage.value = 'Pojazd został dodany do floty.'
     await loadUnits()
   }
   catch (error) {
-    errorMessage.value = error instanceof Error ? error.message : 'Nie udalo sie dodac pojazdu'
+    errorMessage.value = error instanceof Error ? error.message : 'Nie udało się dodać pojazdu'
   }
 }
 
@@ -112,7 +112,7 @@ async function createModel() {
     || modelForm.extraMileageFee < 0
     || modelForm.powerHp <= 0
   ) {
-    errorMessage.value = 'Uzupelnij poprawnie wszystkie pola modelu.'
+    errorMessage.value = 'Uzupełnij poprawnie wszystkie pola modelu.'
     return
   }
 
@@ -132,11 +132,11 @@ async function createModel() {
       fuelType: modelForm.fuelType,
     })
 
-    successMessage.value = 'Model zostal dodany do katalogu.'
+    successMessage.value = 'Model został dodany do katalogu.'
     await loadUnits()
   }
   catch (error) {
-    errorMessage.value = error instanceof Error ? error.message : 'Nie udalo sie dodac modelu'
+    errorMessage.value = error instanceof Error ? error.message : 'Nie udało się dodać modelu'
   }
   finally {
     creatingModel.value = false
@@ -149,7 +149,7 @@ async function changeStatus(unitId: number, status: string) {
     await loadUnits()
   }
   catch (error) {
-    errorMessage.value = error instanceof Error ? error.message : 'Nie udalo sie zmienic statusu pojazdu'
+    errorMessage.value = error instanceof Error ? error.message : 'Nie udało się zmienić statusu pojazdu'
   }
 }
 
@@ -159,7 +159,7 @@ onMounted(loadUnits)
 <template>
   <v-container class="py-8">
     <h1 class="text-3xl font-bold mb-2">
-      Zarzadzanie flota
+      Zarządzanie flotą
     </h1>
     <p class="text-slate-500 mb-6">
       Statusy aut: na placu, u klienta lub w warsztacie.
@@ -186,16 +186,16 @@ onMounted(loadUnits)
             <v-text-field v-model="modelForm.segment" label="Segment" />
           </v-col>
           <v-col cols="12" md="3">
-            <v-text-field v-model.number="modelForm.pricePerDay" label="Cena za dzien" type="number" />
+            <v-text-field v-model.number="modelForm.pricePerDay" label="Cena za dzień" type="number" />
           </v-col>
           <v-col cols="12" md="3">
             <v-text-field v-model.number="modelForm.depositAmount" label="Kaucja" type="number" />
           </v-col>
           <v-col cols="12" md="3">
-            <v-text-field v-model.number="modelForm.mileageLimitPerDay" label="Limit km / dzien" type="number" />
+            <v-text-field v-model.number="modelForm.mileageLimitPerDay" label="Limit km / dzień" type="number" />
           </v-col>
           <v-col cols="12" md="3">
-            <v-text-field v-model.number="modelForm.extraMileageFee" label="Doplata za km" type="number" />
+            <v-text-field v-model.number="modelForm.extraMileageFee" label="Dopłata za km" type="number" />
           </v-col>
           <v-col cols="12" md="4">
             <v-text-field v-model.number="modelForm.powerHp" label="Moc (KM)" type="number" />
@@ -244,7 +244,7 @@ onMounted(loadUnits)
             <v-text-field v-model.number="newUnit.productionYear" label="Rocznik" type="number" />
           </v-col>
           <v-col cols="12" md="4">
-            <v-text-field v-model="newUnit.imageUrl" label="URL zdjecia" />
+            <v-text-field v-model="newUnit.imageUrl" label="URL zdjęcia" />
           </v-col>
         </v-row>
       </v-card-text>
@@ -279,7 +279,7 @@ onMounted(loadUnits)
               <v-menu>
                 <template #activator="{ props }">
                   <v-btn size="small" variant="outlined" v-bind="props">
-                    Zmien status
+                    Zmień status
                   </v-btn>
                 </template>
                 <v-list>

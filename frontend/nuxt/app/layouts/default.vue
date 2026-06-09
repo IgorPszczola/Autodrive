@@ -17,7 +17,9 @@ async function handleLogout() {
 <template>
   <v-app>
     <v-app-bar>
-      <v-app-bar-title>Autodrive</v-app-bar-title>
+      <v-app-bar-title>
+        <NuxtLink class="decoration-none color-white" to="/">Autodrive</NuxtLink>
+      </v-app-bar-title>
       <v-spacer />
       <v-btn to="/" variant="text">
         Start

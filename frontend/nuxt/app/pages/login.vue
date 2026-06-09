@@ -15,7 +15,7 @@ async function submit() {
   errorMessage.value = ''
 
   if (!form.email.trim() || !form.password.trim()) {
-    errorMessage.value = 'Uzupelnij email i haslo.'
+    errorMessage.value = 'Uzupełnij email i hasło.'
     return
   }
 
@@ -31,7 +31,7 @@ async function submit() {
   catch (error) {
     errorMessage.value = error instanceof Error
       ? error.message
-      : 'Logowanie nie powiodlo sie.'
+      : 'Logowanie nie powiodło się.'
   }
   finally {
     loading.value = false
@@ -62,7 +62,7 @@ async function submit() {
           />
           <v-text-field
             v-model="form.password"
-            label="Haslo"
+            label="Hasło"
             type="password"
             required
           />
@@ -82,13 +82,13 @@ async function submit() {
             :loading="loading"
             block
           >
-            Zaloguj sie
+            Zaloguj się
           </v-btn>
         </v-form>
       </v-card-text>
       <v-card-actions>
         <v-btn to="/register" variant="text">
-          Nie masz konta? Zarejestruj sie
+          Nie masz konta? Zarejestruj się
         </v-btn>
       </v-card-actions>
     </v-card>

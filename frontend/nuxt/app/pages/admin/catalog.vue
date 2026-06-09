@@ -31,7 +31,7 @@ async function loadModels() {
     models.value = await rentalApi.getCarModels()
   }
   catch (error) {
-    errorMessage.value = error instanceof Error ? error.message : 'Nie udalo sie pobrac modeli'
+    errorMessage.value = error instanceof Error ? error.message : 'Nie udało się pobrać modeli'
   }
   finally {
     loading.value = false
@@ -51,7 +51,7 @@ async function createModel() {
     || form.extraMileageFee < 0
     || form.powerHp <= 0
   ) {
-    errorMessage.value = 'Uzupelnij poprawnie wszystkie pola modelu.'
+    errorMessage.value = 'Uzupełnij poprawnie wszystkie pola modelu.'
     return
   }
 
@@ -69,11 +69,11 @@ async function createModel() {
       fuelType: form.fuelType,
     })
 
-    successMessage.value = 'Nowy model zostal dodany do katalogu.'
+    successMessage.value = 'Nowy model został dodany do katalogu.'
     await loadModels()
   }
   catch (error) {
-    errorMessage.value = error instanceof Error ? error.message : 'Nie udalo sie dodac modelu'
+    errorMessage.value = error instanceof Error ? error.message : 'Nie udało się dodać modelu'
   }
 }
 
@@ -83,10 +83,10 @@ onMounted(loadModels)
 <template>
   <v-container class="py-8">
     <h1 class="text-3xl font-bold mb-2">
-      Zarzadzanie katalogiem modeli
+      Zarządzanie katalogiem modeli
     </h1>
     <p class="text-slate-500 mb-6">
-      Dodawanie nowych modeli oraz aktualizacja cen i parametrow.
+      Dodawanie nowych modeli oraz aktualizacja cen i parametrów.
     </p>
 
     <v-alert v-if="errorMessage" type="error" class="mb-4">
@@ -110,16 +110,16 @@ onMounted(loadModels)
             <v-text-field v-model="form.segment" label="Segment" />
           </v-col>
           <v-col cols="12" md="3">
-            <v-text-field v-model.number="form.pricePerDay" label="Cena za dzien" type="number" />
+            <v-text-field v-model.number="form.pricePerDay" label="Cena za dzień" type="number" />
           </v-col>
           <v-col cols="12" md="3">
             <v-text-field v-model.number="form.depositAmount" label="Kaucja" type="number" />
           </v-col>
           <v-col cols="12" md="3">
-            <v-text-field v-model.number="form.mileageLimitPerDay" label="Limit km / dzien" type="number" />
+            <v-text-field v-model.number="form.mileageLimitPerDay" label="Limit km / dzień" type="number" />
           </v-col>
           <v-col cols="12" md="3">
-            <v-text-field v-model.number="form.extraMileageFee" label="Doplata za km" type="number" />
+            <v-text-field v-model.number="form.extraMileageFee" label="Dopłata za km" type="number" />
           </v-col>
           <v-col cols="12" md="4">
             <v-text-field v-model.number="form.powerHp" label="Moc (KM)" type="number" />
@@ -147,7 +147,7 @@ onMounted(loadModels)
             <th>ID</th>
             <th>Model</th>
             <th>Segment</th>
-            <th>Cena / dzien</th>
+            <th>Cena / dzień</th>
             <th>Paliwo</th>
             <th>Skrzynia</th>
           </tr>

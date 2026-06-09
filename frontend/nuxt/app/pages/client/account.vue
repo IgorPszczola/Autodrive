@@ -27,7 +27,7 @@ async function loadReservations() {
     reservations.value = await rentalApi.getMyReservations()
   }
   catch (error) {
-    errorMessage.value = error instanceof Error ? error.message : 'Nie udalo sie pobrac rezerwacji'
+    errorMessage.value = error instanceof Error ? error.message : 'Nie udało się pobrać rezerwacji'
   }
   finally {
     loading.value = false
@@ -51,11 +51,11 @@ async function loadModelMap() {
 async function cancelReservation(id: number) {
   try {
     await rentalApi.cancelReservation(id)
-    successMessage.value = 'Rezerwacja zostala anulowana.'
+    successMessage.value = 'Rezerwacja została anulowana.'
     await loadReservations()
   }
   catch (error) {
-    errorMessage.value = error instanceof Error ? error.message : 'Nie udalo sie anulowac rezerwacji'
+    errorMessage.value = error instanceof Error ? error.message : 'Nie udało się anulować rezerwacji'
   }
 }
 
@@ -73,6 +73,22 @@ function getReservationModelLabel(reservation: Record<string, any>): string {
   const brand = reservation.carModel?.brand ?? reservation.carBrand ?? ''
   const model = reservation.carModel?.model ?? reservation.carModelName ?? reservation.carModel ?? ''
   return `${brand} ${model}`.trim() || '-'
+}
+
+function getUserRoleLabel(role?: string): string {
+  if (!role) {
+    return '-'
+  }
+
+  if (role === 'ROLE_ADMIN') {
+    return 'Administrator'
+  }
+
+  if (role === 'ROLE_USER') {
+    return 'Użytkownik'
+  }
+
+  return role
 }
 
 function canCancelReservation(reservation: Record<string, any>): boolean {
@@ -100,7 +116,7 @@ function openReviewDialog(carModelId: number) {
 
 async function submitReview() {
   if (!reviewForm.carModelId || !reviewForm.comment.trim()) {
-    errorMessage.value = 'Wybierz model i wpisz tresc opinii.'
+    errorMessage.value = 'Wybierz model i wpisz treść opinii.'
     return
   }
 
@@ -112,15 +128,16 @@ async function submitReview() {
     })
 
     reviewDialog.value = false
-    successMessage.value = 'Dziekujemy za opinie.'
+    successMessage.value = 'Dziękujemy za opinię.'
   }
   catch (error) {
-    errorMessage.value = error instanceof Error ? error.message : 'Nie udalo sie zapisac opinii'
+    errorMessage.value = error instanceof Error ? error.message : 'Nie udało się zapisać opinii'
   }
 }
 
 onMounted(async () => {
   await Promise.all([loadReservations(), loadModelMap()])
+
 })
 </script>
 
@@ -130,7 +147,7 @@ onMounted(async () => {
       Moje konto i rezerwacje
     </h1>
     <p class="text-slate-500 mb-6">
-      Historia wypozyczen, status zwrotu i oceny po zakonczonych wyjazdach.
+      Historia wypożyczeń, status zwrotu i oceny po zakończonych wyjazdach.
     </p>
 
     <v-alert v-if="errorMessage" type="error" class="mb-4">
@@ -139,9 +156,8 @@ onMounted(async () => {
     <v-alert v-if="successMessage" type="success" class="mb-4">
       {{ successMessage }}
     </v-alert>
-
     <v-card class="mb-6">
-      <v-card-title>Dane uzytkownika</v-card-title>
+      <v-card-title>Dane użytkownika</v-card-title>
       <v-card-text>
         <v-row>
           <v-col cols="12" md="6">
@@ -157,12 +173,12 @@ onMounted(async () => {
               Rola
             </div>
             <div class="font-medium">
-              {{ user?.role || '-' }}
+              {{ getUserRoleLabel(user?.role) }}
             </div>
           </v-col>
           <v-col cols="12" md="6">
             <div class="text-sm text-slate-500">
-              Imie
+              Imię
             </div>
             <div class="font-medium">
               {{ user?.firstName || '-' }}
@@ -188,6 +204,8 @@ onMounted(async () => {
             <th>ID</th>
             <th>Model</th>
             <th>Termin</th>
+            <th>Ubezpieczenie</th>
+            <th>Dodatki</th>
             <th>Status</th>
             <th>Kwota</th>
             <th>Akcje</th>
@@ -198,6 +216,8 @@ onMounted(async () => {
             <td>{{ reservation.id }}</td>
             <td>{{ getReservationModelLabel(reservation) }}</td>
             <td>{{ reservation.startDate }} - {{ reservation.endDate }}</td>
+            <td>{{ reservation.insuranceVariant?.name ?? reservation.insuranceVariantName ?? '-' }}</td>
+            <td>{{ reservation.addons?.length ? reservation.addons.map((a: any) => a.name).join(', ') : '-' }}</td>
             <td>{{ reservation.status }}</td>
             <td>{{ reservation.totalPrice || '-' }}</td>
             <td>
@@ -218,13 +238,13 @@ onMounted(async () => {
                   color="primary"
                   @click="openReviewDialog(getReservationModelId(reservation))"
                 >
-                  Dodaj ocene
+                  Dodaj ocenę
                 </v-btn>
               </div>
             </td>
           </tr>
           <tr v-if="!loading && !reservations.length">
-            <td colspan="6" class="text-center py-6">
+            <td colspan="8" class="text-center py-6">
               Brak rezerwacji
             </td>
           </tr>
@@ -234,7 +254,7 @@ onMounted(async () => {
 
     <v-dialog v-model="reviewDialog" max-width="560">
       <v-card>
-        <v-card-title>Ocen zakonczony wyjazd</v-card-title>
+        <v-card-title>Oceń zakończony wyjazd</v-card-title>
         <v-card-text>
           <v-slider
             v-model="reviewForm.rating"

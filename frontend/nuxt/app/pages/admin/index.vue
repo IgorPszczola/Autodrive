@@ -50,7 +50,7 @@ async function loadDashboard() {
     reservations.value = reservationsData
   }
   catch (error) {
-    errorMessage.value = error instanceof Error ? error.message : 'Nie udalo sie pobrac panelu admina'
+    errorMessage.value = error instanceof Error ? error.message : 'Nie udało się pobrać panelu admina'
   }
   finally {
     loading.value = false
@@ -63,13 +63,13 @@ async function assignUnit(reservationId: number) {
     await loadDashboard()
   }
   catch (error) {
-    errorMessage.value = error instanceof Error ? error.message : 'Nie udalo sie wydac kluczykow'
+    errorMessage.value = error instanceof Error ? error.message : 'Nie udało się wydać kluczyków'
   }
 }
 
 async function processReturn() {
   if (!returnForm.reservationId || returnForm.currentMileage < 0 || returnForm.damageCost < 0) {
-    errorMessage.value = 'Uzupelnij poprawnie formularz zwrotu auta.'
+    errorMessage.value = 'Uzupełnij poprawnie formularz zwrotu auta.'
     return
   }
 
@@ -84,7 +84,7 @@ async function processReturn() {
     await loadDashboard()
   }
   catch (error) {
-    errorMessage.value = error instanceof Error ? error.message : 'Nie udalo sie zakonczyc zwrotu'
+    errorMessage.value = error instanceof Error ? error.message : 'Nie udało się zakończyć zwrotu'
   }
 }
 
@@ -97,7 +97,7 @@ onMounted(loadDashboard)
       Panel pracownika / administratora
     </h1>
     <p class="text-slate-500 mb-6">
-      Rezerwacje klientow, wydawanie kluczykow i obsluga zwrotow.
+      Rezerwacje klientów, wydawanie kluczyków i obsługa zwrotów.
     </p>
 
     <v-alert v-if="errorMessage" type="error" class="mb-4">
@@ -107,7 +107,7 @@ onMounted(loadDashboard)
     <v-row>
       <v-col cols="12" md="3">
         <v-card>
-          <v-card-title>Zysk calkowity</v-card-title>
+          <v-card-title>Zysk całkowity</v-card-title>
           <v-card-text class="text-2xl font-semibold">
             {{ stats?.totalEarnings ?? 0 }} PLN
           </v-card-text>
@@ -140,7 +140,7 @@ onMounted(loadDashboard)
     </v-row>
 
     <v-card class="mt-6">
-      <v-card-title>Lista rezerwacji klientow</v-card-title>
+      <v-card-title>Lista rezerwacji klientów</v-card-title>
       <v-table>
         <thead>
           <tr>
@@ -148,6 +148,8 @@ onMounted(loadDashboard)
             <th>Klient</th>
             <th>Auto</th>
             <th>Termin</th>
+            <th>Ubezpieczenie</th>
+            <th>Dodatki</th>
             <th>Status</th>
             <th>Akcje</th>
           </tr>
@@ -158,6 +160,8 @@ onMounted(loadDashboard)
             <td>{{ getReservationUserEmail(reservation) }}</td>
             <td>{{ getReservationCarLabel(reservation) }}</td>
             <td>{{ reservation.startDate }} - {{ reservation.endDate }}</td>
+            <td>{{ reservation.insuranceVariant?.name ?? reservation.insuranceVariantName ?? '-' }}</td>
+            <td>{{ reservation.addons?.length ? reservation.addons.map((a: any) => a.name).join(', ') : '-' }}</td>
             <td>{{ reservation.status }}</td>
             <td>
               <div class="flex gap-2">
@@ -178,7 +182,7 @@ onMounted(loadDashboard)
     </v-card>
 
     <v-card class="mt-6">
-      <v-card-title>Modul zwrotu auta</v-card-title>
+      <v-card-title>Moduł zwrotu auta</v-card-title>
       <v-card-text>
         <v-row>
           <v-col cols="12" md="3">
@@ -188,7 +192,7 @@ onMounted(loadDashboard)
             <v-text-field v-model.number="returnForm.currentMileage" label="Przebieg" type="number" />
           </v-col>
           <v-col cols="12" md="3">
-            <v-text-field v-model.number="returnForm.damageCost" label="Koszt uszkodzen" type="number" />
+            <v-text-field v-model.number="returnForm.damageCost" label="Koszt uszkodzeń" type="number" />
           </v-col>
           <v-col cols="12" md="3" class="flex items-center">
             <v-checkbox v-model="returnForm.isDamaged" label="Auto uszkodzone" />
@@ -196,16 +200,16 @@ onMounted(loadDashboard)
         </v-row>
         <v-textarea
           v-model="returnForm.damageNotes"
-          label="Opis uszkodzen"
+          label="Opis uszkodzeń"
           rows="3"
         />
       </v-card-text>
       <v-card-actions>
         <v-btn color="primary" @click="processReturn">
-          Zakoncz zwrot
+          Zakończ zwrot
         </v-btn>
         <v-btn to="/admin/fleet" variant="text">
-          Przejdz do floty
+          Przejdź do floty
         </v-btn>
       </v-card-actions>
     </v-card>

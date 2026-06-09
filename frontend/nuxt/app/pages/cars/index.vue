@@ -14,14 +14,14 @@ const models = ref<Array<Record<string, any>>>([])
 const modelImageById = ref<Record<number, string>>({})
 
 const sortByOptions = [
-  { title: 'Cena za dzien', value: 'pricePerDay' },
+  { title: 'Cena za dzień', value: 'pricePerDay' },
   { title: 'Marka', value: 'brand' },
   { title: 'Model', value: 'model' },
 ]
 
 const sortDirOptions = [
-  { title: 'Rosnaco', value: 'asc' },
-  { title: 'Malejaco', value: 'desc' },
+  { title: 'Rosnąco', value: 'asc' },
+  { title: 'Malejąco', value: 'desc' },
 ]
 
 function getFirstUnitImage(units: Array<Record<string, any>>): string {
@@ -56,7 +56,7 @@ async function loadModels() {
     )
   }
   catch (error) {
-    errorMessage.value = error instanceof Error ? error.message : 'Nie udalo sie pobrac katalogu'
+    errorMessage.value = error instanceof Error ? error.message : 'Nie udało się pobrać katalogu'
   }
   finally {
     loading.value = false
@@ -70,10 +70,10 @@ onMounted(loadModels)
   <v-container class="py-8" max-width="1160">
     <div class="mb-6">
       <h1 class="text-2xl font-semibold">
-        Katalog samochodow
+        Katalog samochodów
       </h1>
       <p class="text-medium-emphasis mt-1">
-        Przegladaj modele, filtruj i sprawdz szczegoly przed rezerwacja.
+        Przeglądaj modele, filtruj i sprawdź szczegóły przed rezerwacją.
       </p>
     </div>
 
@@ -84,7 +84,7 @@ onMounted(loadModels)
             <v-text-field v-model="filters.brand" label="Marka" hide-details />
           </v-col>
           <v-col cols="12" md="3">
-            <v-text-field v-model="filters.maxPrice" label="Maks cena" type="number" hide-details />
+            <v-text-field v-model="filters.maxPrice" label="Maks. cena" type="number" hide-details />
           </v-col>
           <v-col cols="12" md="3">
             <v-select
@@ -131,7 +131,7 @@ onMounted(loadModels)
           >
             <template #placeholder>
               <div class="h-full w-full flex items-center justify-center text-medium-emphasis text-xs text-black">
-                Brak zdjecia
+                Brak zdjęcia
               </div>
             </template>
           </v-img>
@@ -154,13 +154,13 @@ onMounted(loadModels)
 
           <v-card-text class="pt-0">
             <p class="text-base font-weight-medium mb-0">
-              {{ car.pricePerDay }} PLN / dzien
+              {{ car.pricePerDay }} PLN / dzień
             </p>
           </v-card-text>
 
           <v-card-actions class="pt-0">
             <v-btn :to="`/cars/${car.id}`" color="primary" variant="text">
-              Szczegoly
+              Szczegóły
             </v-btn>
             <v-btn :to="`/client/reservations/new?carModelId=${car.id}`" variant="text">
               Rezerwuj

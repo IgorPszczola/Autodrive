@@ -42,6 +42,13 @@ interface InsuranceVariant {
   description: string
 }
 
+interface Addon {
+  id: number
+  name: string
+  description: string
+  pricePerDay: number
+}
+
 interface Reservation {
   id: number
   startDate: string
@@ -227,6 +234,12 @@ export function useRentalApi() {
     }).then(normalizeListResponse<InsuranceVariant>)
   }
 
+  function getAddons() {
+    return apiRequest<Addon[] | PagedResponse<Addon>>('/api/addons', {
+      method: 'GET',
+    }).then(normalizeListResponse<Addon>)
+  }
+
   function createReservation(carModelId: number, payload: ReservationCreatePayload) {
     return apiRequest<unknown>('/api/reservations', {
       method: 'POST',
@@ -260,7 +273,7 @@ export function useRentalApi() {
   }
 
   function getAdminReservations() {
-    return apiRequest<Reservation[] | PagedResponse<Reservation>>('/api/reservations/my', {
+    return apiRequest<Reservation[] | PagedResponse<Reservation>>('/api/admin/reservations/all', {
       method: 'GET',
     }).then(normalizeListResponse<Reservation>)
   }
@@ -312,6 +325,7 @@ export function useRentalApi() {
     getModelReviews,
     createReview,
     getInsuranceVariants,
+    getAddons,
     createReservation,
     cancelReservation,
     getMyReservations,

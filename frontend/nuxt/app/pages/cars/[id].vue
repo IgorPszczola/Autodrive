@@ -31,7 +31,7 @@ async function loadDetails() {
     reviews.value = reviewsData
   }
   catch (error) {
-    errorMessage.value = error instanceof Error ? error.message : 'Nie udalo sie pobrac szczegolow modelu'
+    errorMessage.value = error instanceof Error ? error.message : 'Nie udało się pobrać szczegółów modelu'
   }
   finally {
     loading.value = false
@@ -64,7 +64,7 @@ watch(modelId, loadDetails, { immediate: true })
             >
               <template #placeholder>
                 <div class="h-full w-full flex items-center justify-center text-medium-emphasis text-xs text-black">
-                  Brak zdjecia dla tego modelu
+                  Brak zdjęcia dla tego modelu
                 </div>
               </template>
             </v-img>
@@ -77,7 +77,7 @@ watch(modelId, loadDetails, { immediate: true })
               Segment {{ model.segment }} | {{ model.fuelType }} | {{ model.transmissionType }}
             </p>
             <v-chip color="primary" size="large">
-              {{ model.pricePerDay }} PLN / dzien
+              {{ model.pricePerDay }} PLN / dzień
             </v-chip>
           </v-col>
         </v-row>
@@ -86,7 +86,7 @@ watch(modelId, loadDetails, { immediate: true })
       <v-row>
         <v-col cols="12" lg="8">
           <v-card class="mb-6" rounded="lg">
-            <v-card-title>Dostepne egzemplarze</v-card-title>
+            <v-card-title>Dostępne egzemplarze</v-card-title>
             <v-table>
               <thead>
                 <tr>
@@ -108,7 +108,7 @@ watch(modelId, loadDetails, { immediate: true })
           </v-card>
 
           <v-card rounded="lg">
-            <v-card-title>Opinie kierowcow</v-card-title>
+            <v-card-title>Opinie kierowców</v-card-title>
             <v-list>
               <v-list-item
                 v-for="review in reviews"
@@ -127,8 +127,8 @@ watch(modelId, loadDetails, { immediate: true })
             <v-list density="compact">
               <v-list-item title="Moc" :subtitle="`${model.powerHp || '-'} KM`" />
               <v-list-item title="Kaucja" :subtitle="`${model.depositAmount || '-'} PLN`" />
-              <v-list-item title="Limit km / dzien" :subtitle="`${model.mileageLimitPerDay || '-'} km`" />
-              <v-list-item title="Doplata za nadmiar km" :subtitle="`${model.extraMileageFee || '-'} PLN`" />
+              <v-list-item title="Limit km / dzień" :subtitle="`${model.mileageLimitPerDay || '-'} km`" />
+              <v-list-item title="Dopłata za nadmiar km" :subtitle="`${model.extraMileageFee || '-'} PLN`" />
             </v-list>
             <v-card-actions>
               <v-btn :to="`/client/reservations/new?carModelId=${model.id}`" color="primary" block>
