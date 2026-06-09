@@ -1,0 +1,8 @@
+services:
+  autodrive-frontend:
+    container_name: autodrive-frontend
+    build:
+      context: .
+      dockerfile: Dockerfile
+    network_mode: host
+    restart: unless-stopped
