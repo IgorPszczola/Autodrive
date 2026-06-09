@@ -120,8 +120,9 @@ public class DataInitializer implements CommandLineRunner {
             t1.setStatus("AVAILABLE"); 
             t1.setProductionYear(2023);
             t1.setVin("5YJ3E1EAXNF000001");
-            t1.setColor("Biały");
+            t1.setColor("Czerwony");
             t1.setCurrentMileage(15000L);
+            t1.setImageUrl("https://i.imgur.com/cCr3SVw.jpeg");
             carUnitRepository.save(t1);
 
             CarUnit t2 = new CarUnit(); 
@@ -152,8 +153,9 @@ public class DataInitializer implements CommandLineRunner {
             p1.setStatus("AVAILABLE"); 
             p1.setProductionYear(2022);
             p1.setVin("WP0AA299XNS000001");
-            p1.setColor("Czerwony");
+            p1.setColor("Czarny");
             p1.setCurrentMileage(28000L);
+            p1.setImageUrl("https://i.imgur.com/q1iwSFn.png");
             carUnitRepository.save(p1);
 
             CarUnit p2 = new CarUnit(); 
@@ -184,8 +186,9 @@ public class DataInitializer implements CommandLineRunner {
             b1.setStatus("AVAILABLE"); 
             b1.setProductionYear(2021);
             b1.setVin("WBA31AG0XNM000001");
-            b1.setColor("Niebieski");
+            b1.setColor("Czarny");
             b1.setCurrentMileage(45000L);
+            b1.setImageUrl("https://i.imgur.com/ZkK7Ez4.png");
             carUnitRepository.save(b1);
 
             CarUnit b2 = new CarUnit(); 
@@ -198,6 +201,7 @@ public class DataInitializer implements CommandLineRunner {
             b2.setCurrentMileage(18000L);
             carUnitRepository.save(b2);
         }
+
 
         System.out.println("[Autodrive DataInitializer] Baza danych została pomyślnie napełniona kompletem danych testowych");
     }
