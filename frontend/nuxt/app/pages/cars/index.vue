@@ -1,0 +1,173 @@
+<script setup lang="ts">
+const rentalApi = useRentalApi()
+
+const filters = reactive({
+  brand: '',
+  maxPrice: '',
+  sortBy: 'pricePerDay',
+  sortDir: 'asc',
+})
+
+const loading = ref(false)
+const errorMessage = ref('')
+const models = ref<Array<Record<string, any>>>([])
+const modelImageById = ref<Record<number, string>>({})
+
+const sortByOptions = [
+  { title: 'Cena za dzien', value: 'pricePerDay' },
+  { title: 'Marka', value: 'brand' },
+  { title: 'Model', value: 'model' },
+]
+
+const sortDirOptions = [
+  { title: 'Rosnaco', value: 'asc' },
+  { title: 'Malejaco', value: 'desc' },
+]
+
+function getFirstUnitImage(units: Array<Record<string, any>>): string {
+  const found = units.find(unit => typeof unit.imageUrl === 'string' && unit.imageUrl.trim())
+  return found?.imageUrl?.trim() ?? ''
+}
+
+function getModelImage(modelId: number): string {
+  return modelImageById.value[modelId] ?? ''
+}
+
+async function loadModels() {
+  loading.value = true
+  errorMessage.value = ''
+
+  try {
+    const modelsData = await rentalApi.getCarModels({
+      brand: filters.brand || undefined,
+      maxPrice: filters.maxPrice ? Number(filters.maxPrice) : undefined,
+      sortBy: filters.sortBy,
+      sortDir: filters.sortDir,
+    })
+
+    models.value = modelsData
+
+    const modelUnits = await Promise.all(
+      modelsData.map(async model => [model.id, await rentalApi.getCarModelUnits(model.id)] as const),
+    )
+
+    modelImageById.value = Object.fromEntries(
+      modelUnits.map(([id, units]) => [id, getFirstUnitImage(units)]),
+    )
+  }
+  catch (error) {
+    errorMessage.value = error instanceof Error ? error.message : 'Nie udalo sie pobrac katalogu'
+  }
+  finally {
+    loading.value = false
+  }
+}
+
+onMounted(loadModels)
+</script>
+
+<template>
+  <v-container class="py-8" max-width="1160">
+    <div class="mb-6">
+      <h1 class="text-2xl font-semibold">
+        Katalog samochodow
+      </h1>
+      <p class="text-medium-emphasis mt-1">
+        Przegladaj modele, filtruj i sprawdz szczegoly przed rezerwacja.
+      </p>
+    </div>
+
+    <v-card class="mb-6" rounded="lg">
+      <v-card-text>
+        <v-row>
+          <v-col cols="12" md="4">
+            <v-text-field v-model="filters.brand" label="Marka" hide-details />
+          </v-col>
+          <v-col cols="12" md="3">
+            <v-text-field v-model="filters.maxPrice" label="Maks cena" type="number" hide-details />
+          </v-col>
+          <v-col cols="12" md="3">
+            <v-select
+              v-model="filters.sortBy"
+              label="Sortuj po"
+              :items="sortByOptions"
+              hide-details
+            />
+          </v-col>
+          <v-col cols="12" md="2">
+            <v-select
+              v-model="filters.sortDir"
+              label="Kierunek"
+              :items="sortDirOptions"
+              hide-details
+            />
+          </v-col>
+        </v-row>
+      </v-card-text>
+      <v-card-actions class="mx-2 mb-2">
+        <v-btn color="primary" variant="flat" :loading="loading" @click="loadModels">
+          Filtruj
+        </v-btn>
+      </v-card-actions>
+    </v-card>
+
+    <v-alert v-if="errorMessage" type="error" variant="tonal" class="mb-4">
+      {{ errorMessage }}
+    </v-alert>
+
+    <v-row>
+      <v-col
+        v-for="car in models"
+        :key="car.id"
+        cols="12"
+        md="6"
+      >
+        <v-card class="h-full overflow-hidden" rounded="lg">
+          <v-img
+            :src="getModelImage(car.id) || undefined"
+            height="220"
+            cover
+            class="bg-grey-lighten-3"
+          >
+            <template #placeholder>
+              <div class="h-full w-full flex items-center justify-center text-medium-emphasis text-xs text-black">
+                Brak zdjecia
+              </div>
+            </template>
+          </v-img>
+
+          <v-card-title class="py-4">
+            <div class="w-full flex items-start justify-between gap-3">
+              <div>
+                <div class="text-xl font-weight-medium leading-tight">
+                  {{ car.brand }} {{ car.model }}
+                </div>
+                <div class="text-sm text-medium-emphasis mt-1">
+                  {{ car.fuelType }} | {{ car.transmissionType }} | {{ car.powerHp }} KM
+                </div>
+              </div>
+              <v-chip color="primary" size="small">
+                {{ car.segment }}
+              </v-chip>
+            </div>
+          </v-card-title>
+
+          <v-card-text class="pt-0">
+            <p class="text-base font-weight-medium mb-0">
+              {{ car.pricePerDay }} PLN / dzien
+            </p>
+          </v-card-text>
+
+          <v-card-actions class="pt-0">
+            <v-btn :to="`/cars/${car.id}`" color="primary" variant="text">
+              Szczegoly
+            </v-btn>
+            <v-btn :to="`/client/reservations/new?carModelId=${car.id}`" variant="text">
+              Rezerwuj
+            </v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-col>
+    </v-row>
+  </v-container>
+</template>

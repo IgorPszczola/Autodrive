@@ -1,0 +1,327 @@
+interface CarModel {
+  id: number
+  brand: string
+  model: string
+  segment: string
+  pricePerDay: number
+  depositAmount?: number
+  mileageLimitPerDay?: number
+  extraMileageFee?: number
+  powerHp?: number
+  transmissionType?: string
+  fuelType?: string
+}
+
+interface CarUnit {
+  id: number
+  licensePlate: string
+  currentMileage?: number
+  status: string
+  vin?: string
+  color?: string
+  carModel?: CarModel
+  imageUrl?: string
+  productionYear?: number
+  modelId?: number
+}
+
+interface Review {
+  id: number
+  carModelId: number
+  carModelName: string
+  userEmail: string
+  rating: number
+  comment: string
+  createdAt: string
+}
+
+interface InsuranceVariant {
+  id: number
+  name: string
+  pricePerDay: number
+  description: string
+}
+
+interface Reservation {
+  id: number
+  startDate: string
+  endDate: string
+  basePrice?: number
+  discountApplied?: number
+  totalPrice?: number
+  depositAmount?: number
+  status: string
+  createdAt?: string
+  user?: {
+    id?: number
+    email?: string
+    firstName?: string
+    lastName?: string
+  }
+  carModel?: CarModel
+  carUnit?: CarUnit
+  addons?: Array<{ id: number, name: string }>
+  insuranceVariant?: InsuranceVariant
+  userEmail?: string
+  carBrand?: string
+  carModelName?: string
+  licensePlate?: string
+  insuranceVariantName?: string
+}
+
+interface ReservationCreatePayload {
+  id: number
+  startDate: string
+  endDate: string
+  addonIds: number[]
+  insuranceVariantId: number
+}
+
+interface CarUnitCreatePayload {
+  carModelId: number
+  licensePlate: string
+  vin: string
+  currentMileage: number
+  color: string
+  productionYear: number
+  imageUrl: string
+}
+
+interface CarModelCreatePayload {
+  brand: string
+  model: string
+  segment: string
+  pricePerDay: number
+  depositAmount: number
+  mileageLimitPerDay: number
+  extraMileageFee: number
+  powerHp: number
+  transmissionType: string
+  fuelType: string
+}
+
+interface ReturnPayload {
+  currentMileage: number
+  isDamaged: boolean
+  damageNotes: string
+  damageCost: number
+}
+
+interface DashboardStats {
+  totalEarnings: number
+  totalReservationsCount: number
+  activeRentalsCount: number
+  fleetInRepairCount: number
+  fleetUtilizationRate: number
+}
+
+interface ReturnReport {
+  id: number
+  returnDate: string
+  endMileage: number
+  extraMileageCost: number
+  damageCost: number
+  damageDescription: string
+  totalSurcharge: number
+  reservation: Reservation
+}
+
+interface PagedResponse<T> {
+  content?: T[]
+  data?: T[]
+}
+
+function normalizeQuery(query?: Record<string, string | number | boolean | undefined>) {
+  if (!query) {
+    return undefined
+  }
+
+  const entries = Object.entries(query).filter(([, value]) => {
+    if (value === undefined) {
+      return false
+    }
+
+    if (typeof value === 'string' && value.trim() === '') {
+      return false
+    }
+
+    return true
+  })
+
+  return entries.length
+    ? Object.fromEntries(entries)
+    : undefined
+}
+
+function normalizeListResponse<T>(response: unknown): T[] {
+  if (Array.isArray(response)) {
+    return response as T[]
+  }
+
+  if (response && typeof response === 'object') {
+    const typed = response as PagedResponse<T>
+    if (Array.isArray(typed.content)) {
+      return typed.content
+    }
+
+    if (Array.isArray(typed.data)) {
+      return typed.data
+    }
+  }
+
+  return []
+}
+
+function toLocalDateTimeStart(value: string): string {
+  return value.includes('T')
+    ? value
+    : `${value}T00:00:00`
+}
+
+function toLocalDateTimeEnd(value: string): string {
+  return value.includes('T')
+    ? value
+    : `${value}T23:59:59`
+}
+
+export function useRentalApi() {
+  function getCarModels(query?: Record<string, string | number | boolean | undefined>) {
+    const normalizedQuery = normalizeQuery(query) ?? {}
+
+    if (typeof normalizedQuery.brand !== 'string') {
+      normalizedQuery.brand = ''
+    }
+
+    return apiRequest<CarModel[] | PagedResponse<CarModel>>('/api/cars/models', {
+      method: 'GET',
+      query: normalizedQuery,
+    }).then(normalizeListResponse<CarModel>)
+  }
+
+  function getCarModel(id: number) {
+    return apiRequest<CarModel>(`/api/cars/models/${id}`, { method: 'GET' })
+  }
+
+  function getCarModelUnits(id: number) {
+    return apiRequest<CarUnit[] | PagedResponse<CarUnit>>(`/api/cars/models/${id}/units`, {
+      method: 'GET',
+    }).then(normalizeListResponse<CarUnit>)
+  }
+
+  function getModelReviews(carModelId: number) {
+    return apiRequest<Review[] | PagedResponse<Review>>(`/api/reviews/model/${carModelId}`, {
+      method: 'GET',
+    }).then(normalizeListResponse<Review>)
+  }
+
+  function createReview(payload: { rating: number, comment: string, carModelId: number }) {
+    return apiRequest<unknown>('/api/reviews', {
+      method: 'POST',
+      body: payload,
+    })
+  }
+
+  function getInsuranceVariants() {
+    return apiRequest<InsuranceVariant[] | PagedResponse<InsuranceVariant>>('/api/insurances', {
+      method: 'GET',
+    }).then(normalizeListResponse<InsuranceVariant>)
+  }
+
+  function createReservation(carModelId: number, payload: ReservationCreatePayload) {
+    return apiRequest<unknown>('/api/reservations', {
+      method: 'POST',
+      query: { carModelId },
+      body: {
+        id: payload.id,
+        startDate: toLocalDateTimeStart(payload.startDate),
+        endDate: toLocalDateTimeEnd(payload.endDate),
+        addonIds: payload.addonIds,
+        insuranceVariantId: payload.insuranceVariantId,
+      } satisfies ReservationCreatePayload,
+    })
+  }
+
+  function cancelReservation(id: number) {
+    return apiRequest<unknown>(`/api/reservations/${id}/cancel`, {
+      method: 'PUT',
+    })
+  }
+
+  function getMyReservations() {
+    return apiRequest<Reservation[] | PagedResponse<Reservation>>('/api/reservations/my', {
+      method: 'GET',
+    }).then(normalizeListResponse<Reservation>)
+  }
+
+  function getAdminStats() {
+    return apiRequest<DashboardStats>('/api/admin/dashboard/stats', {
+      method: 'GET',
+    })
+  }
+
+  function getAdminReservations() {
+    return apiRequest<Reservation[] | PagedResponse<Reservation>>('/api/reservations/my', {
+      method: 'GET',
+    }).then(normalizeListResponse<Reservation>)
+  }
+
+  function assignUnit(reservationId: number) {
+    return apiRequest<string>(`/api/admin/reservations/${reservationId}/assign-unit`, {
+      method: 'PUT',
+    })
+  }
+
+  function processReturn(id: number, payload: ReturnPayload) {
+    return apiRequest<unknown>(`/api/admin/reservations/${id}/return`, {
+      method: 'PUT',
+      body: payload,
+    })
+  }
+
+  function getReturnReport(reservationId: number) {
+    return apiRequest<ReturnReport>(`/api/admin/reservations/${reservationId}/return-report`, {
+      method: 'GET',
+    })
+  }
+
+  function createCarUnit(payload: CarUnitCreatePayload) {
+    return apiRequest<unknown>('/api/admin/units', {
+      method: 'POST',
+      body: payload,
+    })
+  }
+
+  function updateCarUnitStatus(id: number, status: string) {
+    return apiRequest<unknown>(`/api/admin/units/${id}/status`, {
+      method: 'PUT',
+      query: { status },
+    })
+  }
+
+  function createCarModel(payload: CarModelCreatePayload) {
+    return apiRequest<unknown>('/api/admin/models', {
+      method: 'POST',
+      body: payload,
+    })
+  }
+
+  return {
+    getCarModels,
+    getCarModel,
+    getCarModelUnits,
+    getModelReviews,
+    createReview,
+    getInsuranceVariants,
+    createReservation,
+    cancelReservation,
+    getMyReservations,
+    getAdminStats,
+    getAdminReservations,
+    assignUnit,
+    processReturn,
+    getReturnReport,
+    createCarUnit,
+    updateCarUnitStatus,
+    createCarModel,
+  }
+}
