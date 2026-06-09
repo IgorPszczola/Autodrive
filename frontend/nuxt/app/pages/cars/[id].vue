@@ -72,10 +72,21 @@ watch(modelId, loadDetails, { immediate: true })
           <v-col cols="12" md="6" class="p-6 md:p-8">
             <h1 class="text-2xl font-semibold mb-2">
               {{ model.brand }} {{ model.model }}
+              <v-chip color="primary" size="small">
+                {{ model.segment }}
+              </v-chip>               
             </h1>
-            <p class="text-medium-emphasis mb-5">
-              Segment {{ model.segment }} | {{ model.fuelType }} | {{ model.transmissionType }}
-            </p>
+            <div class="text-sm text-medium-emphasis my-4 flex gap-4">
+              <span>
+                <v-icon color="blue">mdi-gas-station</v-icon> {{ model.fuelType }}
+              </span>
+              <span>
+                <v-icon color="blue">mdi-cog</v-icon> {{ model.transmissionType }}
+              </span>
+              <span>
+                <v-icon color="blue">mdi-car-speed-limiter</v-icon> {{ model.powerHp }} KM
+              </span>
+            </div>
             <v-chip color="primary" size="large">
               {{ model.pricePerDay }} PLN / dzień
             </v-chip>
@@ -85,7 +96,7 @@ watch(modelId, loadDetails, { immediate: true })
 
       <v-row>
         <v-col cols="12" lg="8">
-          <v-card class="mb-6" rounded="lg">
+          <v-card class="mb-6 pa-4" rounded="lg">
             <v-card-title>Dostępne egzemplarze</v-card-title>
             <v-table>
               <thead>
@@ -107,7 +118,7 @@ watch(modelId, loadDetails, { immediate: true })
             </v-table>
           </v-card>
 
-          <v-card rounded="lg">
+          <v-card rounded="lg" class="pa-4">
             <v-card-title>Opinie kierowców</v-card-title>
             <v-list>
               <v-list-item
@@ -122,7 +133,7 @@ watch(modelId, loadDetails, { immediate: true })
         </v-col>
 
         <v-col cols="12" lg="4">
-          <v-card rounded="lg">
+          <v-card rounded="lg" class="pa-4">
             <v-card-title>Specyfikacja</v-card-title>
             <v-list density="compact">
               <v-list-item title="Moc" :subtitle="`${model.powerHp || '-'} KM`" />

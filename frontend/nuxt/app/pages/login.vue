@@ -41,7 +41,7 @@ async function submit() {
 
 <template>
   <v-container class="py-10" max-width="520">
-    <v-card>
+    <v-card class="pa-4">
       <v-card-title>Logowanie</v-card-title>
       <v-card-text>
         <v-form @submit.prevent="submit">

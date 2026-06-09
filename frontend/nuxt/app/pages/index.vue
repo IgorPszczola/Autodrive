@@ -109,7 +109,7 @@ const quickActions = [
     </v-row>
 
     <v-card rounded="xl" variant="flat" color="blue-grey-darken-4" class="mb-8">
-      <v-card-text class="d-flex flex-column flex-md-row align-md-center justify-space-between ga-4 py-6">
+      <v-card-text class="d-flex flex-column flex-md-row align-md-center justify-space-between ga-4 pa-10">
         <div>
           <div class="text-xs text-medium-emphasis mb-1">
             SZYBKI START

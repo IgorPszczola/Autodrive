@@ -142,8 +142,16 @@ onMounted(loadModels)
                 <div class="text-xl font-weight-medium leading-tight">
                   {{ car.brand }} {{ car.model }}
                 </div>
-                <div class="text-sm text-medium-emphasis mt-1">
-                  {{ car.fuelType }} | {{ car.transmissionType }} | {{ car.powerHp }} KM
+                <div class="text-sm text-medium-emphasis mt-1 flex gap-4">
+                  <span>
+                    <v-icon color="blue">mdi-gas-station</v-icon> {{ car.fuelType }}
+                  </span>
+                  <span>
+                    <v-icon color="blue">mdi-cog</v-icon> {{ car.transmissionType }}
+                  </span>
+                  <span>
+                    <v-icon color="blue">mdi-car-speed-limiter</v-icon> {{ car.powerHp }} KM
+                  </span>
                 </div>
               </div>
               <v-chip color="primary" size="small">
@@ -151,10 +159,10 @@ onMounted(loadModels)
               </v-chip>
             </div>
           </v-card-title>
-
+          <v-divider />
           <v-card-text class="pt-0">
             <p class="text-base font-weight-medium mb-0">
-              {{ car.pricePerDay }} PLN / dzień
+              <span class="text-sm">Cena (za dzień):</span> {{ car.pricePerDay }} PLN
             </p>
           </v-card-text>
 
