@@ -4,6 +4,8 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        NUXT_PUBLIC_BACKEND_URL: http://host.docker.internal:8080
     ports:
       - "3000:3000"
     environment:

@@ -6,6 +6,8 @@ COPY package*.json ./
 RUN if [ -f package-lock.json ]; then npm ci; else npm install --no-audit --no-fund; fi
 
 FROM deps AS build
+ARG NUXT_PUBLIC_BACKEND_URL=http://localhost:8080
+ENV NUXT_PUBLIC_BACKEND_URL=${NUXT_PUBLIC_BACKEND_URL}
 COPY . .
 RUN npm run build
 
