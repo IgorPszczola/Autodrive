@@ -7,6 +7,7 @@ const rentalApi = useRentalApi()
 
 const loading = ref(false)
 const errorMessage = ref('')
+const successMessage = ref('')
 const stats = ref<Record<string, any> | null>(null)
 const reservations = ref<Array<Record<string, any>>>([])
 
@@ -17,6 +18,14 @@ const returnForm = reactive({
   damageNotes: '',
   damageCost: 0,
 })
+
+function resetReturnForm() {
+  returnForm.reservationId = 0
+  returnForm.currentMileage = 0
+  returnForm.isDamaged = false
+  returnForm.damageNotes = ''
+  returnForm.damageCost = 0
+}
 
 function getReservationUserEmail(reservation: Record<string, any>): string {
   return reservation.user?.email ?? reservation.userEmail ?? '-'
@@ -68,6 +77,8 @@ async function assignUnit(reservationId: number) {
 }
 
 async function processReturn() {
+  successMessage.value = ''
+
   if (!returnForm.reservationId || returnForm.currentMileage < 0 || returnForm.damageCost < 0) {
     errorMessage.value = 'Uzupełnij poprawnie formularz zwrotu auta.'
     return
@@ -82,6 +93,8 @@ async function processReturn() {
     })
 
     await loadDashboard()
+    resetReturnForm()
+    successMessage.value = 'Zwrot auta został zakończony.'
   }
   catch (error) {
     errorMessage.value = error instanceof Error ? error.message : 'Nie udało się zakończyć zwrotu'
@@ -99,10 +112,6 @@ onMounted(loadDashboard)
     <p class="text-slate-500 mb-6">
       Rezerwacje klientów, wydawanie kluczyków i obsługa zwrotów.
     </p>
-
-    <v-alert v-if="errorMessage" type="error" class="mb-4">
-      {{ errorMessage }}
-    </v-alert>
 
     <v-row>
       <v-col cols="12" md="3">
@@ -139,7 +148,7 @@ onMounted(loadDashboard)
       </v-col>
     </v-row>
 
-    <v-card class="mt-6">
+    <v-card class="mt-6 mb-6">
       <v-card-title>Lista rezerwacji klientów</v-card-title>
       <v-table>
         <thead>
@@ -180,8 +189,15 @@ onMounted(loadDashboard)
         </tbody>
       </v-table>
     </v-card>
+    
+    <v-alert v-if="errorMessage" type="error" class="mb-4">
+      {{ errorMessage }}
+    </v-alert>
+    <v-alert v-if="successMessage" type="success" class="my-2">
+      {{ successMessage }}
+    </v-alert>
 
-    <v-card class="mt-6">
+    <v-card class="pa-4 mt-6">
       <v-card-title>Moduł zwrotu auta</v-card-title>
       <v-card-text>
         <v-row>
