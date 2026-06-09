@@ -2,7 +2,6 @@ package com.autodrive.backend.controller;
 
 import com.autodrive.backend.dto.CarRequestReturn;
 import com.autodrive.backend.dto.CarReturnResponse;
-import com.autodrive.backend.model.Reservation;
 import com.autodrive.backend.model.ReturnReport;
 import com.autodrive.backend.service.ReservationService;
 
