@@ -40,7 +40,7 @@ public class CarController {
             @RequestParam(defaultValue = "asc") String sortDir
     ) {
         try {
-            List<CarModel> models = carModelService.getFilteredModels(brand, fuelType, maxPrice, segment, sortBy, sortDir);
+            List<CarModelResponse> models = carModelService.getFilteredModels(brand, fuelType, maxPrice, segment, sortBy, sortDir);
             return ResponseEntity.ok(models);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of(

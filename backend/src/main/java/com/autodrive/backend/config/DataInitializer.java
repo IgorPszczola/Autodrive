@@ -112,6 +112,7 @@ public class DataInitializer implements CommandLineRunner {
             teslaModel.setPowerHp(325);
             teslaModel.setTransmissionType("AUTOMATIC");
             teslaModel.setFuelType("ELECTRIC");
+            teslaModel.setMinRentDays(1);
             carModelRepository.save(teslaModel);
 
             CarUnit t1 = new CarUnit(); 
@@ -145,6 +146,7 @@ public class DataInitializer implements CommandLineRunner {
             porscheModel.setPowerHp(385);
             porscheModel.setTransmissionType("AUTOMATIC");
             porscheModel.setFuelType("PETROL");
+            porscheModel.setMinRentDays(2);
             carModelRepository.save(porscheModel);
 
             CarUnit p1 = new CarUnit(); 
@@ -178,6 +180,7 @@ public class DataInitializer implements CommandLineRunner {
             bmwModel.setPowerHp(394);
             bmwModel.setTransmissionType("AUTOMATIC");
             bmwModel.setFuelType("DIESEL");
+            bmwModel.setMinRentDays(2);
             carModelRepository.save(bmwModel);
 
             CarUnit b1 = new CarUnit(); 

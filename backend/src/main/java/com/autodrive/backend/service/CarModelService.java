@@ -32,13 +32,15 @@ public class CarModelService {
             .orElse(null);
     }
 
-    public List<CarModel> getFilteredModels(String brand, String fuelType, java.math.BigDecimal maxPrice, String segment, String sortBy, String sortDir) {
+    public List<CarModelResponse> getFilteredModels(String brand, String fuelType, java.math.BigDecimal maxPrice, String segment, String sortBy, String sortDir) {
         String sortField = resolveSortField(sortBy);
         Sort sort = sortDir.equalsIgnoreCase("desc")
                 ? Sort.by(sortField).descending()
                 : Sort.by(sortField).ascending();
 
-        return carModelRepository.findFiltered(brand, fuelType, maxPrice, segment, sort);
+        return carModelRepository.findFiltered(brand, fuelType, maxPrice, segment, sort).stream()
+                .map(this::mapToDto)
+                .collect(Collectors.toList());
     }
 
     private String resolveSortField(String sortBy) {
@@ -63,7 +65,8 @@ public class CarModelService {
             carModel.getExtraMileageFee(),
             carModel.getPowerHp(),
             carModel.getTransmissionType(),
-            carModel.getFuelType()
+            carModel.getFuelType(),
+            carModel.getMinRentDays()
         );
     }
 
@@ -84,6 +87,7 @@ public class CarModelService {
         carModel.setPowerHp(request.powerHp());
         carModel.setTransmissionType(request.transmissionType());
         carModel.setFuelType(request.fuelType());
+        carModel.setMinRentDays(request.minRentDays() != null ? request.minRentDays() : 1);
 
         CarModel saved = carModelRepository.save(carModel);
         return mapToDto(saved);

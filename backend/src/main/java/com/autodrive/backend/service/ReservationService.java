@@ -11,6 +11,7 @@ import com.autodrive.backend.dto.AddonResponse;
 import com.autodrive.backend.dto.CarRequestReturn;
 import com.autodrive.backend.dto.CarReturnResponse;
 import com.autodrive.backend.dto.DashboardStatsResponse;
+import com.autodrive.backend.dto.MonthlyEarningsResponse;
 import com.autodrive.backend.dto.ReservationRequest;
 import com.autodrive.backend.dto.ReservationResponse;
 import com.autodrive.backend.model.Addon;
@@ -80,6 +81,10 @@ public class ReservationService {
         long days = ChronoUnit.DAYS.between(requestedStartDate, requestedEndDate);
         if (days == 0) {
             days = 1;
+        }
+
+        if (days < carModel.getMinRentDays()) {
+            throw new IllegalArgumentException("Minimalny okres rezerwacji dla tego modelu to " + carModel.getMinRentDays() + " dni!");
         }
 
         BigDecimal baseVehiclePrice = carModel.getPricePerDay().multiply(BigDecimal.valueOf(days));
@@ -179,8 +184,8 @@ public class ReservationService {
         }
 
     
-        if (reservation.getStartDate().isBefore(java.time.LocalDate.now())) {
-            throw new IllegalStateException("Cannot cancel a reservation that has already started!");
+        if (!java.time.LocalDate.now().isBefore(reservation.getStartDate())) {
+            throw new IllegalStateException("Rezerwację można anulować najpóźniej dzień przed jej rozpoczęciem!");
         }
 
     
@@ -337,6 +342,32 @@ public class ReservationService {
                 )).toList()
             ))
             .toList();
+    }
+
+    public List<MonthlyEarningsResponse> getMonthlyEarnings() {
+        int currentYear = java.time.LocalDate.now().getYear();
+
+        List<Reservation> validReservations = reservationRepository.findAll().stream()
+                .filter(r -> !r.getStatus().equals("CANCELLED"))
+                .filter(r -> r.getStartDate().getYear() == currentYear)
+                .toList();
+
+        String[] monthNames = {
+            "Styczeń", "Luty", "Marzec", "Kwiecień", "Maj", "Czerwiec",
+            "Lipiec", "Sierpień", "Wrzesień", "Październik", "Listopad", "Grudzień"
+        };
+
+        List<MonthlyEarningsResponse> response = new java.util.ArrayList<>();
+        for (int i = 1; i <= 12; i++) {
+            final int monthVal = i;
+            BigDecimal earnings = validReservations.stream()
+                    .filter(r -> r.getStartDate().getMonthValue() == monthVal)
+                    .map(Reservation::getTotalPrice)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+            response.add(new MonthlyEarningsResponse(i, monthNames[i - 1], earnings));
+        }
+
+        return response;
     }
 
 }

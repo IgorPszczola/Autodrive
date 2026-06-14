@@ -12,7 +12,8 @@ public record CarModelRequest(
     BigDecimal extraMileageFee,
     Integer powerHp,
     String transmissionType,
-    String fuelType
+    String fuelType,
+    Integer minRentDays
 ) {
     
 }
