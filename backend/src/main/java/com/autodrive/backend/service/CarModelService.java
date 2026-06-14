@@ -3,6 +3,9 @@ package com.autodrive.backend.service;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -32,15 +35,16 @@ public class CarModelService {
             .orElse(null);
     }
 
-    public List<CarModelResponse> getFilteredModels(String brand, String fuelType, java.math.BigDecimal maxPrice, String segment, String sortBy, String sortDir) {
+    public Page<CarModelResponse> getFilteredModels(Pageable pageable, String brand, String fuelType, java.math.BigDecimal maxPrice, String segment, String sortBy, String sortDir) {
         String sortField = resolveSortField(sortBy);
         Sort sort = sortDir.equalsIgnoreCase("desc")
                 ? Sort.by(sortField).descending()
                 : Sort.by(sortField).ascending();
 
-        return carModelRepository.findFiltered(brand, fuelType, maxPrice, segment, sort).stream()
-                .map(this::mapToDto)
-                .collect(Collectors.toList());
+        Pageable pageableWithSort = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), sort);
+
+        return carModelRepository.findFiltered(pageableWithSort, brand, fuelType, maxPrice, segment)
+            .map(this::mapToDto);
     }
 
     private String resolveSortField(String sortBy) {

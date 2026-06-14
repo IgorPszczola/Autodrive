@@ -4,6 +4,9 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -32,6 +35,7 @@ public class CarController {
 
     @GetMapping("/models")
     public ResponseEntity<?> getModels(
+            @PageableDefault(size = 10, page = 0) Pageable pageable,
             @RequestParam(required = false) String brand,
             @RequestParam(required = false) String fuelType,
             @RequestParam(required = false) BigDecimal maxPrice,
@@ -40,8 +44,10 @@ public class CarController {
             @RequestParam(defaultValue = "asc") String sortDir
     ) {
         try {
-            List<CarModelResponse> models = carModelService.getFilteredModels(brand, fuelType, maxPrice, segment, sortBy, sortDir);
-            return ResponseEntity.ok(models);
+
+            Page<CarModelResponse> modelsPage = carModelService.getFilteredModels(pageable, brand, fuelType, maxPrice, segment, sortBy, sortDir);
+
+            return ResponseEntity.ok(modelsPage);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of(
                 "status", 400,
