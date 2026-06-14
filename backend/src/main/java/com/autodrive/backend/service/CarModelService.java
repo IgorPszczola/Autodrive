@@ -32,13 +32,15 @@ public class CarModelService {
             .orElse(null);
     }
 
-    public List<CarModel> getFilteredModels(String brand, String fuelType, java.math.BigDecimal maxPrice, String segment, String sortBy, String sortDir) {
+    public List<CarModelResponse> getFilteredModels(String brand, String fuelType, java.math.BigDecimal maxPrice, String segment, String sortBy, String sortDir) {
         String sortField = resolveSortField(sortBy);
         Sort sort = sortDir.equalsIgnoreCase("desc")
                 ? Sort.by(sortField).descending()
                 : Sort.by(sortField).ascending();
 
-        return carModelRepository.findFiltered(brand, fuelType, maxPrice, segment, sort);
+        return carModelRepository.findFiltered(brand, fuelType, maxPrice, segment, sort).stream()
+                .map(this::mapToDto)
+                .collect(Collectors.toList());
     }
 
     private String resolveSortField(String sortBy) {
