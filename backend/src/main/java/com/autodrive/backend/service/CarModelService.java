@@ -63,7 +63,8 @@ public class CarModelService {
             carModel.getExtraMileageFee(),
             carModel.getPowerHp(),
             carModel.getTransmissionType(),
-            carModel.getFuelType()
+            carModel.getFuelType(),
+            carModel.getMinRentDays()
         );
     }
 
@@ -84,6 +85,7 @@ public class CarModelService {
         carModel.setPowerHp(request.powerHp());
         carModel.setTransmissionType(request.transmissionType());
         carModel.setFuelType(request.fuelType());
+        carModel.setMinRentDays(request.minRentDays() != null ? request.minRentDays() : 1);
 
         CarModel saved = carModelRepository.save(carModel);
         return mapToDto(saved);

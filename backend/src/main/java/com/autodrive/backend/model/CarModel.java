@@ -57,4 +57,8 @@ public class CarModel {
 	@Column(name = "fuel_type", nullable = false, columnDefinition = "varchar(50)")
 	@JdbcTypeCode(Types.VARCHAR)
 	private String fuelType;
+
+	@Column(name = "min_rent_days", nullable = false, columnDefinition = "INT DEFAULT 1")
+	private Integer minRentDays = 1;
 }
+

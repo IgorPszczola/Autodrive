@@ -82,6 +82,10 @@ public class ReservationService {
             days = 1;
         }
 
+        if (days < carModel.getMinRentDays()) {
+            throw new IllegalArgumentException("Minimalny okres rezerwacji dla tego modelu to " + carModel.getMinRentDays() + " dni!");
+        }
+
         BigDecimal baseVehiclePrice = carModel.getPricePerDay().multiply(BigDecimal.valueOf(days));
         BigDecimal currentTotalPrice = baseVehiclePrice;
 
