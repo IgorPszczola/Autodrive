@@ -5,6 +5,14 @@ definePageMeta({
 
 const rentalApi = useRentalApi()
 
+function createDebouncedFn<T extends (...args: any[]) => any>(fn: T, delay: number) {
+  let timeoutId: ReturnType<typeof setTimeout> | null = null
+  return (...args: Parameters<T>) => {
+    if (timeoutId !== null) clearTimeout(timeoutId)
+    timeoutId = setTimeout(() => fn(...args), delay)
+  }
+}
+
 const statusOptions = ['AVAILABLE', 'RESERVED', 'RENTED', 'IN_REPAIR']
 const loading = ref(false)
 const errorMessage = ref('')
@@ -12,6 +20,11 @@ const successMessage = ref('')
 const creatingModel = ref(false)
 const units = ref<Array<Record<string, any>>>([])
 const models = ref<Array<Record<string, any>>>([])
+const currentPage = ref(1)
+const totalPages = ref(0)
+const modelSearchQuery = ref('')
+const modelSearchResults = ref<Array<Record<string, any>>>([])
+const modelSearchLoading = ref(false)
 
 const modelForm = reactive({
   brand: '',
@@ -41,7 +54,12 @@ async function loadUnits() {
   errorMessage.value = ''
 
   try {
-    models.value = await rentalApi.getCarModels()
+    const pageData = await rentalApi.getCarModels({}, currentPage.value - 1, 10)
+    models.value = pageData.content
+    totalPages.value = pageData.totalPages
+
+    // Pokaż modele z bieżącej strony w autocomplete
+    modelSearchResults.value = models.value
 
     const unitsData = await Promise.all(models.value.map(model => rentalApi.getCarModelUnits(model.id)))
     units.value = unitsData.flat().map((unit) => {
@@ -153,7 +171,37 @@ async function changeStatus(unitId: number, status: string) {
   }
 }
 
+function getModelLabel(model: Record<string, any> | null): string {
+  if (!model) return ''
+  // Obsługuj zarówno top-level jak i zagnieżdżone pola carModel
+  const brand = model?.brand || model?.carModel?.brand || ''
+  const name = model?.model || model?.carModel?.model || ''
+  return `${brand} ${name}`.trim()
+}
+
+const searchModels = createDebouncedFn(async (query: string) => {
+  if (!query.trim()) {
+    modelSearchResults.value = []
+    return
+  }
+
+  modelSearchLoading.value = true
+
+  try {
+    const pageData = await rentalApi.getCarModels({ brand: query }, 0, 10)
+    modelSearchResults.value = pageData.content
+  }
+  catch (error) {
+    modelSearchResults.value = []
+  }
+  finally {
+    modelSearchLoading.value = false
+  }
+}, 300)
+
 onMounted(loadUnits)
+
+watch(currentPage, loadUnits)
 </script>
 
 <template>
@@ -220,13 +268,26 @@ onMounted(loadUnits)
       <v-card-text>
         <v-row>
           <v-col cols="12" md="3">
-            <v-select
+            <v-autocomplete
               v-model="newUnit.carModelId"
-              :items="models"
-              :item-title="item => `${item.brand} ${item.model}`"
+              :items="modelSearchResults"
+              :item-title="getModelLabel"
               item-value="id"
               label="Model"
-            />
+              placeholder="Wpisz markę..."
+              no-filter
+              :loading="modelSearchLoading"
+              @update:search="searchModels"
+            >
+              <template #item="{ props, item }">
+                <v-list-item
+                  v-bind="props"
+                  :subtitle="item?.raw
+                    ? `${item.raw.pricePerDay || 0} PLN / dzień`
+                    : ''"
+                />
+              </template>
+            </v-autocomplete>
           </v-col>
           <v-col cols="12" md="3">
             <v-text-field v-model="newUnit.licensePlate" label="Rejestracja" />
@@ -295,6 +356,13 @@ onMounted(loadUnits)
           </tr>
         </tbody>
       </v-table>
+
+      <div v-if="totalPages > 1" class="pa-4 flex justify-center">
+        <v-pagination
+          v-model="currentPage"
+          :length="totalPages"
+        />
+      </div>
     </v-card>
   </v-container>
 </template>

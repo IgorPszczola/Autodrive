@@ -9,6 +9,8 @@ const loading = ref(false)
 const errorMessage = ref('')
 const successMessage = ref('')
 const models = ref<Array<Record<string, any>>>([])
+const currentPage = ref(1)
+const totalPages = ref(0)
 
 const form = reactive({
   brand: '',
@@ -28,7 +30,9 @@ async function loadModels() {
   errorMessage.value = ''
 
   try {
-    models.value = await rentalApi.getCarModels()
+    const pageData = await rentalApi.getCarModels({}, currentPage.value - 1, 10)
+    models.value = pageData.content
+    totalPages.value = pageData.totalPages
   }
   catch (error) {
     errorMessage.value = error instanceof Error ? error.message : 'Nie udało się pobrać modeli'
@@ -70,6 +74,7 @@ async function createModel() {
     })
 
     successMessage.value = 'Nowy model został dodany do katalogu.'
+    currentPage.value = 1
     await loadModels()
   }
   catch (error) {
@@ -78,6 +83,8 @@ async function createModel() {
 }
 
 onMounted(loadModels)
+
+watch(currentPage, loadModels)
 </script>
 
 <template>
@@ -163,6 +170,13 @@ onMounted(loadModels)
           </tr>
         </tbody>
       </v-table>
+
+      <div v-if="totalPages > 1" class="pa-4 flex justify-center">
+        <v-pagination
+          v-model="currentPage"
+          :length="totalPages"
+        />
+      </div>
     </v-card>
   </v-container>
 </template>

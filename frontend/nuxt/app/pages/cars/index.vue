@@ -12,6 +12,8 @@ const loading = ref(false)
 const errorMessage = ref('')
 const models = ref<Array<Record<string, any>>>([])
 const modelImageById = ref<Record<number, string>>({})
+const currentPage = ref(1)
+const totalPages = ref(0)
 
 const sortByOptions = [
   { title: 'Cena za dzień', value: 'pricePerDay' },
@@ -38,17 +40,22 @@ async function loadModels() {
   errorMessage.value = ''
 
   try {
-    const modelsData = await rentalApi.getCarModels({
-      brand: filters.brand || undefined,
-      maxPrice: filters.maxPrice ? Number(filters.maxPrice) : undefined,
-      sortBy: filters.sortBy,
-      sortDir: filters.sortDir,
-    })
+    const pageData = await rentalApi.getCarModels(
+      {
+        brand: filters.brand || undefined,
+        maxPrice: filters.maxPrice ? Number(filters.maxPrice) : undefined,
+        sortBy: filters.sortBy,
+        sortDir: filters.sortDir,
+      },
+      currentPage.value - 1,
+      10,
+    )
 
-    models.value = modelsData
+    models.value = pageData.content
+    totalPages.value = pageData.totalPages
 
     const modelUnits = await Promise.all(
-      modelsData.map(async model => [model.id, await rentalApi.getCarModelUnits(model.id)] as const),
+      pageData.content.map(async model => [model.id, await rentalApi.getCarModelUnits(model.id)] as const),
     )
 
     modelImageById.value = Object.fromEntries(
@@ -64,6 +71,8 @@ async function loadModels() {
 }
 
 onMounted(loadModels)
+
+watch(currentPage, loadModels)
 </script>
 
 <template>
@@ -105,7 +114,7 @@ onMounted(loadModels)
         </v-row>
       </v-card-text>
       <v-card-actions class="mx-2 mb-2">
-        <v-btn color="primary" variant="flat" :loading="loading" @click="loadModels">
+        <v-btn color="primary" variant="flat" :loading="loading" @click="currentPage = 1; loadModels()">
           Filtruj
         </v-btn>
       </v-card-actions>
@@ -177,5 +186,12 @@ onMounted(loadModels)
         </v-card>
       </v-col>
     </v-row>
+
+    <div v-if="totalPages > 1" class="mt-6 flex justify-center">
+      <v-pagination
+        v-model="currentPage"
+        :length="totalPages"
+      />
+    </div>
   </v-container>
 </template>

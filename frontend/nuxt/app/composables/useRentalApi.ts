@@ -138,6 +138,14 @@ interface PagedResponse<T> {
   data?: T[]
 }
 
+interface SpringPage<T> {
+  content: T[]
+  totalElements: number
+  totalPages: number
+  size: number
+  number: number
+}
+
 function normalizeQuery(query?: Record<string, string | number | boolean | undefined>) {
   if (!query) {
     return undefined
@@ -192,21 +200,40 @@ function toLocalDateTimeEnd(value: string): string {
 }
 
 export function useRentalApi() {
-  function getCarModels(query?: Record<string, string | number | boolean | undefined>) {
+  function getCarModels(query?: Record<string, string | number | boolean | undefined>, page?: number, size?: number) {
     const normalizedQuery = normalizeQuery(query) ?? {}
 
     if (typeof normalizedQuery.brand !== 'string') {
       normalizedQuery.brand = ''
     }
 
-    return apiRequest<CarModel[] | PagedResponse<CarModel>>('/api/cars/models', {
+    if (typeof page === 'number' && page >= 0) {
+      normalizedQuery.page = page
+    }
+
+    if (typeof size === 'number' && size > 0) {
+      normalizedQuery.size = size
+    }
+
+    return apiRequest<SpringPage<CarModel>>('/api/cars/models', {
       method: 'GET',
       query: normalizedQuery,
-    }).then(normalizeListResponse<CarModel>)
+    })
   }
 
   function getCarModel(id: number) {
-    return apiRequest<CarModel>(`/api/cars/models/${id}`, { method: 'GET' })
+    return apiRequest<SpringPage<CarModel> | CarModel>(`/api/cars/models/${id}`, { method: 'GET' }).then((response) => {
+      if (!response)
+        return null
+      if ('content' in response && Array.isArray(response.content) && response.content.length > 0) {
+        return response.content[0]
+      }
+      if ('id' in response && 'brand' in response) {
+        return response as CarModel
+      }
+
+      return null
+    })
   }
 
   function getCarModelUnits(id: number) {

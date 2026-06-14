@@ -14,12 +14,21 @@ function getLocalDate(offsetDays = 0): string {
   return date.toISOString().slice(0, 10)
 }
 
+function createDebouncedFn<T extends (...args: any[]) => any>(fn: T, delay: number) {
+  let timeoutId: ReturnType<typeof setTimeout> | null = null
+  return (...args: Parameters<T>) => {
+    if (timeoutId !== null) clearTimeout(timeoutId)
+    timeoutId = setTimeout(() => fn(...args), delay)
+  }
+}
+
 const step = ref(1)
 const isMounted = ref(false)
 const loading = ref(false)
 const submitting = ref(false)
 const errorMessage = ref('')
 const successMessage = ref('')
+const modelSearchLoading = ref(false)
 
 const form = reactive({
   carModelId: Number(route.query.carModelId || 0),
@@ -29,11 +38,17 @@ const form = reactive({
   addonIds: [] as number[],
 })
 
-const models = ref<Array<Record<string, any>>>([])
+const modelSearchResults = ref<Array<Record<string, any>>>([])
+const preselectedModel = ref<Record<string, any> | null>(null)
 const insuranceVariants = ref<Array<Record<string, any>>>([])
 const addons = ref<Array<Record<string, any>>>([])
 
-const selectedModel = computed(() => models.value.find(model => model.id === form.carModelId) || null)
+const selectedModel = computed(() => {
+  const found = modelSearchResults.value.find(model => model.id === form.carModelId)
+  if (found) return found
+  if (form.carModelId && preselectedModel.value?.id === form.carModelId) return preselectedModel.value
+  return null
+})
 const selectedAddons = computed(() => addons.value.filter(addon => form.addonIds.includes(addon.id)))
 
 const daysCount = computed(() => {
@@ -80,18 +95,26 @@ async function loadData() {
   errorMessage.value = ''
 
   try {
-    const [modelsData, insuranceData, addonData] = await Promise.all([
-      rentalApi.getCarModels(),
+    const [insuranceData, addonData] = await Promise.all([
       rentalApi.getInsuranceVariants(),
       rentalApi.getAddons(),
     ])
 
-    models.value = modelsData
     insuranceVariants.value = insuranceData
     addons.value = addonData
 
-    if (!form.carModelId && modelsData[0]) {
-      form.carModelId = modelsData[0].id
+    // Jeśli carModelId jest w URL query, załaduj ten model
+    if (form.carModelId > 0) {
+      try {
+        const modelData = await rentalApi.getCarModel(form.carModelId)
+        if (modelData) {
+          preselectedModel.value = modelData
+          modelSearchResults.value = [modelData]
+        }
+      }
+      catch (err) {
+        console.error('Błąd przy ładowaniu modelu:', err)
+      }
     }
 
     if (!form.insuranceVariantId && insuranceData[0]) {
@@ -151,6 +174,26 @@ async function submitReservation() {
   }
 }
 
+const searchModels = createDebouncedFn(async (query: string) => {
+  if (!query.trim()) {
+    modelSearchResults.value = preselectedModel.value ? [preselectedModel.value] : []
+    return
+  }
+
+  modelSearchLoading.value = true
+
+  try {
+    const pageData = await rentalApi.getCarModels({ brand: query }, 0, 10)
+    modelSearchResults.value = pageData.content
+  }
+  catch (error) {
+    modelSearchResults.value = []
+  }
+  finally {
+    modelSearchLoading.value = false
+  }
+}, 300)
+
 onMounted(async () => {
   isMounted.value = true
   await loadData()
@@ -178,13 +221,16 @@ onMounted(async () => {
         <v-stepper v-model="step" :items="['Daty', 'Dodatki', 'Podsumowanie']" hide-actions>
           <template #item.1>
             <div class="grid gap-4 md:grid-cols-2 pt-4">
-              <v-select
+              <v-autocomplete
                 v-model="form.carModelId"
-                :items="models"
+                :items="modelSearchResults"
                 :item-title="getModelLabel"
                 item-value="id"
                 label="Model"
-                :loading="loading"
+                placeholder="Wpisz markę..."
+                no-filter
+                :loading="modelSearchLoading"
+                @update:search="searchModels"
               >
                 <template #item="{ props, item }">
                   <v-list-item
@@ -194,7 +240,7 @@ onMounted(async () => {
                       : ''"
                   />
                 </template>
-              </v-select>
+              </v-autocomplete>
               <v-text-field v-model="form.startDate" label="Data od" type="date" />
               <v-text-field v-model="form.endDate" label="Data do" type="date" />
             </div>
