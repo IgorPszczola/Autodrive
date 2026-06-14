@@ -183,8 +183,8 @@ public class ReservationService {
         }
 
     
-        if (reservation.getStartDate().isBefore(java.time.LocalDate.now())) {
-            throw new IllegalStateException("Cannot cancel a reservation that has already started!");
+        if (!java.time.LocalDate.now().isBefore(reservation.getStartDate())) {
+            throw new IllegalStateException("Rezerwację można anulować najpóźniej dzień przed jej rozpoczęciem!");
         }
 
     
