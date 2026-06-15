@@ -1,3 +1,5 @@
+import process from 'node:process'
+
 const backendUrl = process.env.NUXT_PUBLIC_BACKEND_URL || 'http://localhost:8080'
 
 // https://nuxt.com/docs/api/configuration/nuxt-config

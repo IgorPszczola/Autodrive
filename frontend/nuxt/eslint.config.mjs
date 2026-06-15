@@ -25,7 +25,6 @@ export default antfu({
       ],
       'vue/prefer-import-from-vue': 'error',
       'vue/multiline-ternary': 'error',
-      'vue/no-bare-strings-in-template': 'error',
       'no-shadow': 'error',
       'vue/singleline-html-element-content-newline': 'error',
       'vue/block-order': 'error',

@@ -18,15 +18,30 @@ async function handleLogout() {
   <v-app>
     <v-app-bar>
       <v-app-bar-title>
-        <NuxtLink class="decoration-none color-white" to="/">Autodrive</NuxtLink>
+        <NuxtLink
+          class="color-white decoration-none"
+          to="/"
+        >
+          Autodrive
+        </NuxtLink>
       </v-app-bar-title>
+
       <v-spacer />
-      <v-btn to="/" variant="text">
+
+      <v-btn
+        to="/"
+        variant="text"
+      >
         Start
       </v-btn>
-      <v-btn to="/cars" variant="text">
+
+      <v-btn
+        to="/cars"
+        variant="text"
+      >
         Katalog
       </v-btn>
+
       <v-btn
         v-if="!isAuthenticated"
         to="/login"
@@ -34,6 +49,7 @@ async function handleLogout() {
       >
         Logowanie
       </v-btn>
+
       <v-btn
         v-if="!isAuthenticated"
         to="/register"
@@ -41,6 +57,7 @@ async function handleLogout() {
       >
         Rejestracja
       </v-btn>
+
       <v-btn
         v-if="isAuthenticated"
         to="/client/reservations/new"
@@ -48,6 +65,7 @@ async function handleLogout() {
       >
         Rezerwacja
       </v-btn>
+
       <v-btn
         v-if="isAuthenticated"
         to="/client/account"
@@ -55,6 +73,7 @@ async function handleLogout() {
       >
         Moje konto
       </v-btn>
+
       <v-btn
         v-if="isAuthenticated && isAdmin"
         to="/admin"
@@ -62,6 +81,7 @@ async function handleLogout() {
       >
         Admin
       </v-btn>
+
       <v-btn
         v-if="isAuthenticated"
         variant="text"
@@ -72,7 +92,10 @@ async function handleLogout() {
     </v-app-bar>
 
     <v-main>
-      <v-container v-if="authMessage" class="pt-4 pb-0">
+      <v-container
+        v-if="authMessage"
+        class="pb-0 pt-4"
+      >
         <v-alert
           type="warning"
           variant="tonal"
@@ -82,6 +105,7 @@ async function handleLogout() {
           {{ authMessage }}
         </v-alert>
       </v-container>
+
       <slot />
     </v-main>
   </v-app>

@@ -122,6 +122,12 @@ interface DashboardStats {
   fleetUtilizationRate: number
 }
 
+interface MonthlyEarning {
+  month: number
+  monthName: string
+  earnings: number
+}
+
 interface ReturnReport {
   id: number
   returnDate: string
@@ -299,6 +305,16 @@ export function useRentalApi() {
     })
   }
 
+  function getMonthlyEarnings() {
+    return apiRequest<MonthlyEarning[]>('/api/admin/dashboard/monthly-earnings', {
+      method: 'GET',
+    }).then((response) => {
+      return Array.isArray(response)
+        ? response
+        : []
+    })
+  }
+
   function getAdminReservations() {
     return apiRequest<Reservation[] | PagedResponse<Reservation>>('/api/admin/reservations/all', {
       method: 'GET',
@@ -357,6 +373,7 @@ export function useRentalApi() {
     cancelReservation,
     getMyReservations,
     getAdminStats,
+    getMonthlyEarnings,
     getAdminReservations,
     assignUnit,
     processReturn,

@@ -26,8 +26,20 @@ const sortDirOptions = [
   { title: 'Malejąco', value: 'desc' },
 ]
 
+function createDebouncedFn<T extends (...args: any[]) => void>(fn: T, delay: number) {
+  let timeoutId: ReturnType<typeof setTimeout> | null = null
+
+  return (...args: Parameters<T>) => {
+    if (timeoutId !== null) {
+      clearTimeout(timeoutId)
+    }
+    timeoutId = setTimeout(fn, delay, ...args)
+  }
+}
+
 function getFirstUnitImage(units: Array<Record<string, any>>): string {
   const found = units.find(unit => typeof unit.imageUrl === 'string' && unit.imageUrl.trim())
+
   return found?.imageUrl?.trim() ?? ''
 }
 
@@ -43,7 +55,9 @@ async function loadModels() {
     const pageData = await rentalApi.getCarModels(
       {
         brand: filters.brand || undefined,
-        maxPrice: filters.maxPrice ? Number(filters.maxPrice) : undefined,
+        maxPrice: filters.maxPrice
+          ? Number(filters.maxPrice)
+          : undefined,
         sortBy: filters.sortBy,
         sortDir: filters.sortDir,
       },
@@ -63,7 +77,9 @@ async function loadModels() {
     )
   }
   catch (error) {
-    errorMessage.value = error instanceof Error ? error.message : 'Nie udało się pobrać katalogu'
+    errorMessage.value = error instanceof Error
+      ? error.message
+      : 'Nie udało się pobrać katalogu'
   }
   finally {
     loading.value = false
@@ -73,29 +89,72 @@ async function loadModels() {
 onMounted(loadModels)
 
 watch(currentPage, loadModels)
+
+const triggerDebouncedLoad = createDebouncedFn(() => {
+  if (currentPage.value !== 1) {
+    currentPage.value = 1
+
+    return
+  }
+  loadModels()
+}, 300)
+
+watch(
+  () => [filters.brand, filters.maxPrice, filters.sortBy, filters.sortDir],
+  () => {
+    triggerDebouncedLoad()
+  },
+)
 </script>
 
 <template>
-  <v-container class="py-8" max-width="1160">
+  <v-container
+    class="py-8"
+    max-width="1160"
+  >
     <div class="mb-6">
       <h1 class="text-2xl font-semibold">
         Katalog samochodów
       </h1>
+
       <p class="text-medium-emphasis mt-1">
         Przeglądaj modele, filtruj i sprawdź szczegóły przed rezerwacją.
       </p>
     </div>
 
-    <v-card class="mb-6" rounded="lg">
+    <v-card
+      class="mb-6"
+      rounded="lg"
+    >
       <v-card-text>
         <v-row>
-          <v-col cols="12" md="4">
-            <v-text-field v-model="filters.brand" label="Marka" hide-details />
+          <v-col
+            cols="12"
+            md="4"
+          >
+            <v-text-field
+              v-model="filters.brand"
+              label="Marka"
+              hide-details
+            />
           </v-col>
-          <v-col cols="12" md="3">
-            <v-text-field v-model="filters.maxPrice" label="Maks. cena" type="number" hide-details />
+
+          <v-col
+            cols="12"
+            md="3"
+          >
+            <v-text-field
+              v-model="filters.maxPrice"
+              label="Maks. cena"
+              type="number"
+              hide-details
+            />
           </v-col>
-          <v-col cols="12" md="3">
+
+          <v-col
+            cols="12"
+            md="3"
+          >
             <v-select
               v-model="filters.sortBy"
               label="Sortuj po"
@@ -103,7 +162,11 @@ watch(currentPage, loadModels)
               hide-details
             />
           </v-col>
-          <v-col cols="12" md="2">
+
+          <v-col
+            cols="12"
+            md="2"
+          >
             <v-select
               v-model="filters.sortDir"
               label="Kierunek"
@@ -113,14 +176,14 @@ watch(currentPage, loadModels)
           </v-col>
         </v-row>
       </v-card-text>
-      <v-card-actions class="mx-2 mb-2">
-        <v-btn color="primary" variant="flat" :loading="loading" @click="currentPage = 1; loadModels()">
-          Filtruj
-        </v-btn>
-      </v-card-actions>
     </v-card>
 
-    <v-alert v-if="errorMessage" type="error" variant="tonal" class="mb-4">
+    <v-alert
+      v-if="errorMessage"
+      type="error"
+      variant="tonal"
+      class="mb-4"
+    >
       {{ errorMessage }}
     </v-alert>
 
@@ -131,7 +194,10 @@ watch(currentPage, loadModels)
         cols="12"
         md="6"
       >
-        <v-card class="h-full overflow-hidden" rounded="lg">
+        <v-card
+          class="h-full overflow-hidden"
+          rounded="lg"
+        >
           <v-img
             :src="getModelImage(car.id) || undefined"
             height="220"
@@ -139,47 +205,64 @@ watch(currentPage, loadModels)
             class="bg-grey-lighten-3"
           >
             <template #placeholder>
-              <div class="h-full w-full flex items-center justify-center text-medium-emphasis text-xs text-black">
+              <div class="text-medium-emphasis text-xs text-black flex h-full w-full items-center justify-center">
                 Brak zdjęcia
               </div>
             </template>
           </v-img>
 
           <v-card-title class="py-4">
-            <div class="w-full flex items-start justify-between gap-3">
+            <div class="flex gap-3 w-full items-start justify-between">
               <div>
-                <div class="text-xl font-weight-medium leading-tight">
+                <div class="font-weight-medium text-xl leading-tight">
                   {{ car.brand }} {{ car.model }}
                 </div>
-                <div class="text-sm text-medium-emphasis mt-1 flex gap-4">
+
+                <div class="text-medium-emphasis text-sm mt-1 flex gap-4">
                   <span>
                     <v-icon color="blue">mdi-gas-station</v-icon> {{ car.fuelType }}
                   </span>
+
                   <span>
                     <v-icon color="blue">mdi-cog</v-icon> {{ car.transmissionType }}
                   </span>
+
                   <span>
                     <v-icon color="blue">mdi-car-speed-limiter</v-icon> {{ car.powerHp }} KM
                   </span>
                 </div>
               </div>
-              <v-chip color="primary" size="small">
+
+              <v-chip
+                color="primary"
+                size="small"
+              >
                 {{ car.segment }}
               </v-chip>
             </div>
           </v-card-title>
+
           <v-divider />
+
           <v-card-text class="pt-0">
-            <p class="text-base font-weight-medium mb-0">
+            <p class="font-weight-medium text-base mb-0">
               <span class="text-sm">Cena (za dzień):</span> {{ car.pricePerDay }} PLN
             </p>
           </v-card-text>
 
           <v-card-actions class="pt-0">
-            <v-btn :to="`/cars/${car.id}`" color="primary" variant="text">
+            <v-btn
+              :to="`/cars/${car.id}`"
+              color="primary"
+              variant="text"
+            >
               Szczegóły
             </v-btn>
-            <v-btn :to="`/client/reservations/new?carModelId=${car.id}`" variant="text">
+
+            <v-btn
+              :to="`/client/reservations/new?carModelId=${car.id}`"
+              variant="text"
+            >
               Rezerwuj
             </v-btn>
           </v-card-actions>
@@ -187,7 +270,10 @@ watch(currentPage, loadModels)
       </v-col>
     </v-row>
 
-    <div v-if="totalPages > 1" class="mt-6 flex justify-center">
+    <div
+      v-if="totalPages > 1"
+      class="mt-6 flex justify-center"
+    >
       <v-pagination
         v-model="currentPage"
         :length="totalPages"

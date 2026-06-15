@@ -35,7 +35,9 @@ async function loadModels() {
     totalPages.value = pageData.totalPages
   }
   catch (error) {
-    errorMessage.value = error instanceof Error ? error.message : 'Nie udało się pobrać modeli'
+    errorMessage.value = error instanceof Error
+      ? error.message
+      : 'Nie udało się pobrać modeli'
   }
   finally {
     loading.value = false
@@ -56,6 +58,7 @@ async function createModel() {
     || form.powerHp <= 0
   ) {
     errorMessage.value = 'Uzupełnij poprawnie wszystkie pola modelu.'
+
     return
   }
 
@@ -78,7 +81,9 @@ async function createModel() {
     await loadModels()
   }
   catch (error) {
-    errorMessage.value = error instanceof Error ? error.message : 'Nie udało się dodać modelu'
+    errorMessage.value = error instanceof Error
+      ? error.message
+      : 'Nie udało się dodać modelu'
   }
 }
 
@@ -92,55 +97,161 @@ watch(currentPage, loadModels)
     <h1 class="text-3xl font-bold mb-2">
       Zarządzanie katalogiem modeli
     </h1>
+
     <p class="text-slate-500 mb-6">
       Dodawanie nowych modeli oraz aktualizacja cen i parametrów.
     </p>
 
-    <v-alert v-if="errorMessage" type="error" class="mb-4">
+    <div class="mb-6 flex flex-wrap gap-2">
+      <v-btn
+        variant="outlined"
+        to="/admin"
+      >
+        Powrót do panelu admina
+      </v-btn>
+
+      <v-btn
+        color="primary"
+        variant="tonal"
+        to="/admin/fleet"
+      >
+        Przejdź do floty
+      </v-btn>
+    </div>
+
+    <v-alert
+      v-if="errorMessage"
+      type="error"
+      class="mb-4"
+    >
       {{ errorMessage }}
     </v-alert>
-    <v-alert v-if="successMessage" type="success" class="mb-4">
+
+    <v-alert
+      v-if="successMessage"
+      type="success"
+      class="mb-4"
+    >
       {{ successMessage }}
     </v-alert>
 
     <v-card class="mb-6">
       <v-card-title>Dodaj nowy model</v-card-title>
+
       <v-card-text>
         <v-row>
-          <v-col cols="12" md="4">
-            <v-text-field v-model="form.brand" label="Marka" />
+          <v-col
+            cols="12"
+            md="4"
+          >
+            <v-text-field
+              v-model="form.brand"
+              label="Marka"
+            />
           </v-col>
-          <v-col cols="12" md="4">
-            <v-text-field v-model="form.model" label="Model" />
+
+          <v-col
+            cols="12"
+            md="4"
+          >
+            <v-text-field
+              v-model="form.model"
+              label="Model"
+            />
           </v-col>
-          <v-col cols="12" md="4">
-            <v-text-field v-model="form.segment" label="Segment" />
+
+          <v-col
+            cols="12"
+            md="4"
+          >
+            <v-text-field
+              v-model="form.segment"
+              label="Segment"
+            />
           </v-col>
-          <v-col cols="12" md="3">
-            <v-text-field v-model.number="form.pricePerDay" label="Cena za dzień" type="number" />
+
+          <v-col
+            cols="12"
+            md="3"
+          >
+            <v-text-field
+              v-model.number="form.pricePerDay"
+              label="Cena za dzień"
+              type="number"
+            />
           </v-col>
-          <v-col cols="12" md="3">
-            <v-text-field v-model.number="form.depositAmount" label="Kaucja" type="number" />
+
+          <v-col
+            cols="12"
+            md="3"
+          >
+            <v-text-field
+              v-model.number="form.depositAmount"
+              label="Kaucja"
+              type="number"
+            />
           </v-col>
-          <v-col cols="12" md="3">
-            <v-text-field v-model.number="form.mileageLimitPerDay" label="Limit km / dzień" type="number" />
+
+          <v-col
+            cols="12"
+            md="3"
+          >
+            <v-text-field
+              v-model.number="form.mileageLimitPerDay"
+              label="Limit km / dzień"
+              type="number"
+            />
           </v-col>
-          <v-col cols="12" md="3">
-            <v-text-field v-model.number="form.extraMileageFee" label="Dopłata za km" type="number" />
+
+          <v-col
+            cols="12"
+            md="3"
+          >
+            <v-text-field
+              v-model.number="form.extraMileageFee"
+              label="Dopłata za km"
+              type="number"
+            />
           </v-col>
-          <v-col cols="12" md="4">
-            <v-text-field v-model.number="form.powerHp" label="Moc (KM)" type="number" />
+
+          <v-col
+            cols="12"
+            md="4"
+          >
+            <v-text-field
+              v-model.number="form.powerHp"
+              label="Moc (KM)"
+              type="number"
+            />
           </v-col>
-          <v-col cols="12" md="4">
-            <v-text-field v-model="form.transmissionType" label="Skrzynia" />
+
+          <v-col
+            cols="12"
+            md="4"
+          >
+            <v-text-field
+              v-model="form.transmissionType"
+              label="Skrzynia"
+            />
           </v-col>
-          <v-col cols="12" md="4">
-            <v-text-field v-model="form.fuelType" label="Paliwo" />
+
+          <v-col
+            cols="12"
+            md="4"
+          >
+            <v-text-field
+              v-model="form.fuelType"
+              label="Paliwo"
+            />
           </v-col>
         </v-row>
       </v-card-text>
+
       <v-card-actions>
-        <v-btn color="primary" @click="createModel">
+        <v-btn
+          color="primary"
+          @click="createModel"
+        >
           Dodaj model
         </v-btn>
       </v-card-actions>
@@ -148,30 +259,48 @@ watch(currentPage, loadModels)
 
     <v-card>
       <v-card-title>Obecny katalog</v-card-title>
+
       <v-table>
         <thead>
           <tr>
             <th>ID</th>
+
             <th>Model</th>
+
             <th>Segment</th>
+
             <th>Cena / dzień</th>
+
             <th>Paliwo</th>
+
             <th>Skrzynia</th>
           </tr>
         </thead>
+
         <tbody>
-          <tr v-for="item in models" :key="item.id">
+          <tr
+            v-for="item in models"
+            :key="item.id"
+          >
             <td>{{ item.id }}</td>
+
             <td>{{ item.brand }} {{ item.model }}</td>
+
             <td>{{ item.segment }}</td>
+
             <td>{{ item.pricePerDay }}</td>
+
             <td>{{ item.fuelType }}</td>
+
             <td>{{ item.transmissionType }}</td>
           </tr>
         </tbody>
       </v-table>
 
-      <div v-if="totalPages > 1" class="pa-4 flex justify-center">
+      <div
+        v-if="totalPages > 1"
+        class="pa-4 flex justify-center"
+      >
         <v-pagination
           v-model="currentPage"
           :length="totalPages"

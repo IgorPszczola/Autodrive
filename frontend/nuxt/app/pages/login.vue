@@ -16,6 +16,7 @@ async function submit() {
 
   if (!form.email.trim() || !form.password.trim()) {
     errorMessage.value = 'Uzupełnij email i hasło.'
+
     return
   }
 
@@ -40,9 +41,13 @@ async function submit() {
 </script>
 
 <template>
-  <v-container class="py-10" max-width="520">
+  <v-container
+    class="py-10"
+    max-width="520"
+  >
     <v-card class="pa-4">
       <v-card-title>Logowanie</v-card-title>
+
       <v-card-text>
         <v-form @submit.prevent="submit">
           <v-alert
@@ -60,6 +65,7 @@ async function submit() {
             type="email"
             required
           />
+
           <v-text-field
             v-model="form.password"
             label="Hasło"
@@ -86,8 +92,12 @@ async function submit() {
           </v-btn>
         </v-form>
       </v-card-text>
+
       <v-card-actions>
-        <v-btn to="/register" variant="text">
+        <v-btn
+          to="/register"
+          variant="text"
+        >
           Nie masz konta? Zarejestruj się
         </v-btn>
       </v-card-actions>

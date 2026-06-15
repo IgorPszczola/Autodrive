@@ -11,6 +11,9 @@ export default defineNuxtRouteMiddleware(async () => {
 
   if (!isAdmin.value) {
     authMessage.value = 'Brak uprawnien administratora.'
+
     return navigateTo('/')
   }
+
+  return undefined
 })

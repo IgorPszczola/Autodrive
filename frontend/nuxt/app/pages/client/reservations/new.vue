@@ -11,14 +11,17 @@ function getLocalDate(offsetDays = 0): string {
   const date = new Date()
   date.setDate(date.getDate() + offsetDays)
   date.setMinutes(date.getMinutes() - date.getTimezoneOffset())
+
   return date.toISOString().slice(0, 10)
 }
 
 function createDebouncedFn<T extends (...args: any[]) => any>(fn: T, delay: number) {
-  let timeoutId: ReturnType<typeof setTimeout> | null = null
+  let timeoutId: ReturnType<typeof setTimeout> | number | null = null
+
   return (...args: Parameters<T>) => {
-    if (timeoutId !== null) clearTimeout(timeoutId)
-    timeoutId = setTimeout(() => fn(...args), delay)
+    if (timeoutId !== null)
+      clearTimeout(timeoutId)
+    timeoutId = setTimeout(fn, delay, ...args)
   }
 }
 
@@ -45,8 +48,11 @@ const addons = ref<Array<Record<string, any>>>([])
 
 const selectedModel = computed(() => {
   const found = modelSearchResults.value.find(model => model.id === form.carModelId)
-  if (found) return found
-  if (form.carModelId && preselectedModel.value?.id === form.carModelId) return preselectedModel.value
+  if (found)
+    return found
+  if (form.carModelId && preselectedModel.value?.id === form.carModelId)
+    return preselectedModel.value
+
   return null
 })
 const selectedAddons = computed(() => addons.value.filter(addon => form.addonIds.includes(addon.id)))
@@ -59,7 +65,10 @@ const daysCount = computed(() => {
   const start = new Date(form.startDate).getTime()
   const end = new Date(form.endDate).getTime()
   const diff = Math.ceil((end - start) / (1000 * 60 * 60 * 24))
-  return diff > 0 ? diff : 0
+
+  return diff > 0
+    ? diff
+    : 0
 })
 
 const estimatedBase = computed(() => {
@@ -90,18 +99,38 @@ function getModelLabel(model: Record<string, any>): string {
   return `${model?.brand ?? ''} ${model?.model ?? ''}`.trim()
 }
 
+function handleModelSelection(modelId: number | null) {
+  if (!modelId) {
+    preselectedModel.value = null
+
+    return
+  }
+
+  const selected = modelSearchResults.value.find(model => model.id === modelId)
+  if (selected) {
+    preselectedModel.value = selected
+  }
+}
+
+async function ensureModelOptionsLoaded() {
+  const pageData = await rentalApi.getCarModels({}, 0, 10)
+  modelSearchResults.value = pageData.content
+}
+
 async function loadData() {
   loading.value = true
   errorMessage.value = ''
 
   try {
-    const [insuranceData, addonData] = await Promise.all([
+    const [insuranceData, addonData, modelsData] = await Promise.all([
       rentalApi.getInsuranceVariants(),
       rentalApi.getAddons(),
+      rentalApi.getCarModels({}, 0, 10),
     ])
 
     insuranceVariants.value = insuranceData
     addons.value = addonData
+    modelSearchResults.value = modelsData.content
 
     // Jeśli carModelId jest w URL query, załaduj ten model
     if (form.carModelId > 0) {
@@ -122,7 +151,9 @@ async function loadData() {
     }
   }
   catch (error) {
-    errorMessage.value = error instanceof Error ? error.message : 'Nie udało się pobrać danych kreatora'
+    errorMessage.value = error instanceof Error
+      ? error.message
+      : 'Nie udało się pobrać danych kreatora'
   }
   finally {
     loading.value = false
@@ -132,21 +163,25 @@ async function loadData() {
 async function submitReservation() {
   if (!form.startDate || !form.endDate) {
     errorMessage.value = 'Uzupełnij datę rozpoczęcia i zakończenia rezerwacji.'
+
     return
   }
 
   if (!form.carModelId) {
     errorMessage.value = 'Wybierz model samochodu'
+
     return
   }
 
   if (!form.insuranceVariantId) {
     errorMessage.value = 'Wybierz wariant ubezpieczenia.'
+
     return
   }
 
   if (new Date(form.endDate).getTime() < new Date(form.startDate).getTime()) {
     errorMessage.value = 'Data zakończenia nie może być wcześniejsza niż data rozpoczęcia.'
+
     return
   }
 
@@ -167,7 +202,9 @@ async function submitReservation() {
     await router.push('/client/account')
   }
   catch (error) {
-    errorMessage.value = error instanceof Error ? error.message : 'Nie udało się utworzyć rezerwacji'
+    errorMessage.value = error instanceof Error
+      ? error.message
+      : 'Nie udało się utworzyć rezerwacji'
   }
   finally {
     submitting.value = false
@@ -176,7 +213,15 @@ async function submitReservation() {
 
 const searchModels = createDebouncedFn(async (query: string) => {
   if (!query.trim()) {
-    modelSearchResults.value = preselectedModel.value ? [preselectedModel.value] : []
+    if (modelSearchResults.value.length > 0) {
+      return
+    }
+
+    try {
+      await ensureModelOptionsLoaded()
+    }
+    catch {}
+
     return
   }
 
@@ -186,7 +231,7 @@ const searchModels = createDebouncedFn(async (query: string) => {
     const pageData = await rentalApi.getCarModels({ brand: query }, 0, 10)
     modelSearchResults.value = pageData.content
   }
-  catch (error) {
+  catch {
     modelSearchResults.value = []
   }
   finally {
@@ -201,26 +246,52 @@ onMounted(async () => {
 </script>
 
 <template>
-  <v-container class="py-8" max-width="920">
+  <v-container
+    class="py-8"
+    max-width="920"
+  >
     <h1 class="text-2xl font-semibold mb-1">
       Kreator rezerwacji
     </h1>
+
     <p class="text-medium-emphasis mb-6">
       Krok 1: Daty, Krok 2: Dodatki i ubezpieczenie, Krok 3: Podsumowanie kosztów.
     </p>
 
-    <v-alert v-if="errorMessage" type="error" variant="tonal" class="mb-4">
+    <v-alert
+      v-if="errorMessage"
+      type="error"
+      variant="tonal"
+      class="mb-4"
+    >
       {{ errorMessage }}
     </v-alert>
-    <v-alert v-if="successMessage" type="success" variant="tonal" class="mb-4">
+
+    <v-alert
+      v-if="successMessage"
+      type="success"
+      variant="tonal"
+      class="mb-4"
+    >
       {{ successMessage }}
     </v-alert>
 
-    <v-card variant="outlined" rounded="lg">
+    <v-card
+      variant="outlined"
+      rounded="lg"
+    >
       <v-card-text class="pt-5">
-        <v-stepper v-model="step" :items="['Daty', 'Dodatki', 'Podsumowanie']" hide-actions>
-          <template #item.1>
-            <div class="grid gap-4 md:grid-cols-2 pt-4">
+        <v-stepper
+          v-model="step"
+          :items="[
+            'Daty',
+            'Dodatki',
+            'Podsumowanie',
+          ]"
+          hide-actions
+        >
+          <template #[`item.1`]>
+            <div class="pt-4 gap-4 grid md:grid-cols-2">
               <v-autocomplete
                 v-model="form.carModelId"
                 :items="modelSearchResults"
@@ -230,9 +301,11 @@ onMounted(async () => {
                 placeholder="Wpisz markę..."
                 no-filter
                 :loading="modelSearchLoading"
+                @focus="ensureModelOptionsLoaded"
+                @update:model-value="handleModelSelection"
                 @update:search="searchModels"
               >
-                <template #item="{ props, item }">
+                <template #item="{props, item}">
                   <v-list-item
                     v-bind="props"
                     :subtitle="item?.raw
@@ -241,13 +314,23 @@ onMounted(async () => {
                   />
                 </template>
               </v-autocomplete>
-              <v-text-field v-model="form.startDate" label="Data od" type="date" />
-              <v-text-field v-model="form.endDate" label="Data do" type="date" />
+
+              <v-text-field
+                v-model="form.startDate"
+                label="Data od"
+                type="date"
+              />
+
+              <v-text-field
+                v-model="form.endDate"
+                label="Data do"
+                type="date"
+              />
             </div>
           </template>
 
-          <template #item.2>
-            <div class="grid gap-4 md:grid-cols-2 pt-4">
+          <template #[`item.2`]>
+            <div class="pt-4 gap-4 grid md:grid-cols-2">
               <v-select
                 v-model="form.insuranceVariantId"
                 :items="insuranceVariants"
@@ -256,6 +339,7 @@ onMounted(async () => {
                 label="Ubezpieczenie"
                 :loading="loading"
               />
+
               <v-select
                 v-model="form.addonIds"
                 :items="addons"
@@ -267,7 +351,7 @@ onMounted(async () => {
                 clearable
                 :loading="loading"
               >
-                <template #item="{ props, item }">
+                <template #item="{props, item}">
                   <v-list-item
                     v-bind="props"
                     :subtitle="item?.raw
@@ -279,37 +363,92 @@ onMounted(async () => {
             </div>
           </template>
 
-          <template #item.3>
+          <template #[`item.3`]>
             <v-row class="pt-4">
-              <v-col cols="12" md="6">
-                <v-list density="compact" class="border rounded-lg">
-                  <v-list-item title="Model" :subtitle="selectedModel ? `${selectedModel.brand} ${selectedModel.model}` : '-'" />
-                  <v-list-item title="Termin" :subtitle="`${form.startDate || '-'} → ${form.endDate || '-'}`" />
-                  <v-list-item title="Liczba dni" :subtitle="String(daysCount)" />
-                  <v-list-item title="Dodatki" :subtitle="selectedAddons.length ? selectedAddons.map(addon => addon.name).join(', ') : 'Brak'" />
+              <v-col
+                cols="12"
+                md="6"
+              >
+                <v-list
+                  density="compact"
+                  class="border rounded-lg"
+                >
+                  <v-list-item
+                    title="Model"
+                    :subtitle="selectedModel
+                      ? `${selectedModel.brand} ${selectedModel.model}`
+                      : '-'"
+                  />
+
+                  <v-list-item
+                    title="Termin"
+                    :subtitle="`${form.startDate || '-'} → ${form.endDate || '-'}`"
+                  />
+
+                  <v-list-item
+                    title="Liczba dni"
+                    :subtitle="String(daysCount)"
+                  />
+
+                  <v-list-item
+                    title="Dodatki"
+                    :subtitle="selectedAddons.length
+                      ? selectedAddons.map(addon => addon.name).join(', ')
+                      : 'Brak'"
+                  />
                 </v-list>
               </v-col>
-              <v-col cols="12" md="6">
-                <v-sheet class="rounded-lg p-4 border" color="transparent">
-                  <p class="mb-1 text-sm">Bazowo: {{ estimatedBase }} PLN</p>
-                  <p class="mb-1 text-sm">Ubezpieczenie: {{ estimatedInsurance }} PLN</p>
-                  <p class="mb-1 text-sm">Dodatki: {{ estimatedAddons }} PLN</p>
-                  <p class="text-xl font-weight-medium">Razem: {{ estimatedTotal }} PLN</p>
+
+              <v-col
+                cols="12"
+                md="6"
+              >
+                <v-sheet
+                  class="p-4 border rounded-lg"
+                  color="transparent"
+                >
+                  <p class="text-sm mb-1">
+                    Bazowo: {{ estimatedBase }} PLN
+                  </p>
+
+                  <p class="text-sm mb-1">
+                    Ubezpieczenie: {{ estimatedInsurance }} PLN
+                  </p>
+
+                  <p class="text-sm mb-1">
+                    Dodatki: {{ estimatedAddons }} PLN
+                  </p>
+
+                  <p class="font-weight-medium text-xl">
+                    Razem: {{ estimatedTotal }} PLN
+                  </p>
                 </v-sheet>
               </v-col>
             </v-row>
           </template>
         </v-stepper>
       </v-card-text>
+
       <v-divider />
+
       <v-card-actions class="px-4 py-3">
-        <v-btn :disabled="step <= 1" @click="step -= 1">
+        <v-btn
+          :disabled="step <= 1"
+          @click="step -= 1"
+        >
           Wstecz
         </v-btn>
+
         <v-spacer />
-        <v-btn v-if="!showSubmitButton" color="primary" @click="step += 1">
+
+        <v-btn
+          v-if="!showSubmitButton"
+          color="primary"
+          @click="step += 1"
+        >
           Dalej
         </v-btn>
+
         <v-btn
           v-else
           color="primary"

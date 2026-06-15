@@ -28,6 +28,7 @@ async function submit() {
     || !form.phoneNumber.trim()
   ) {
     errorMessage.value = 'Uzupełnij wszystkie wymagane pola formularza.'
+
     return
   }
 
@@ -46,7 +47,9 @@ async function submit() {
     await router.push('/login')
   }
   catch (error) {
-    errorMessage.value = error instanceof Error ? error.message : 'Rejestracja nie powiodła się'
+    errorMessage.value = error instanceof Error
+      ? error.message
+      : 'Rejestracja nie powiodła się'
   }
   finally {
     loading.value = false
@@ -55,20 +58,31 @@ async function submit() {
 </script>
 
 <template>
-  <v-container class="py-10" max-width="640">
+  <v-container
+    class="py-10"
+    max-width="640"
+  >
     <v-card class="pa-4">
       <v-card-title>Rejestracja</v-card-title>
+
       <v-card-text>
         <v-form @submit.prevent="submit">
           <v-row>
-            <v-col cols="12" md="6">
+            <v-col
+              cols="12"
+              md="6"
+            >
               <v-text-field
                 v-model="form.firstName"
                 label="Imię"
                 required
               />
             </v-col>
-            <v-col cols="12" md="6">
+
+            <v-col
+              cols="12"
+              md="6"
+            >
               <v-text-field
                 v-model="form.lastName"
                 label="Nazwisko"
@@ -83,17 +97,20 @@ async function submit() {
             type="email"
             required
           />
+
           <v-text-field
             v-model="form.password"
             label="Hasło"
             type="password"
             required
           />
+
           <v-text-field
             v-model="form.driverLicenseNumber"
             label="Numer prawa jazdy"
             required
           />
+
           <v-text-field
             v-model="form.phoneNumber"
             label="Numer telefonu"
@@ -128,8 +145,12 @@ async function submit() {
           </v-btn>
         </v-form>
       </v-card-text>
+
       <v-card-actions>
-        <v-btn to="/login" variant="text">
+        <v-btn
+          to="/login"
+          variant="text"
+        >
           Masz już konto? Zaloguj się
         </v-btn>
       </v-card-actions>

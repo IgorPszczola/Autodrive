@@ -6,10 +6,12 @@ definePageMeta({
 const rentalApi = useRentalApi()
 
 function createDebouncedFn<T extends (...args: any[]) => any>(fn: T, delay: number) {
-  let timeoutId: ReturnType<typeof setTimeout> | null = null
+  let timeoutId: ReturnType<typeof setTimeout> | number | null = null
+
   return (...args: Parameters<T>) => {
-    if (timeoutId !== null) clearTimeout(timeoutId)
-    timeoutId = setTimeout(() => fn(...args), delay)
+    if (timeoutId !== null)
+      clearTimeout(timeoutId)
+    timeoutId = setTimeout(fn, delay, ...args)
   }
 }
 
@@ -17,27 +19,13 @@ const statusOptions = ['AVAILABLE', 'RESERVED', 'RENTED', 'IN_REPAIR']
 const loading = ref(false)
 const errorMessage = ref('')
 const successMessage = ref('')
-const creatingModel = ref(false)
 const units = ref<Array<Record<string, any>>>([])
 const models = ref<Array<Record<string, any>>>([])
 const currentPage = ref(1)
 const totalPages = ref(0)
-const modelSearchQuery = ref('')
 const modelSearchResults = ref<Array<Record<string, any>>>([])
 const modelSearchLoading = ref(false)
-
-const modelForm = reactive({
-  brand: '',
-  model: '',
-  segment: '',
-  pricePerDay: 0,
-  depositAmount: 0,
-  mileageLimitPerDay: 0,
-  extraMileageFee: 0,
-  powerHp: 0,
-  transmissionType: '',
-  fuelType: '',
-})
+const selectedUnitModel = ref<Record<string, any> | null>(null)
 
 const newUnit = reactive({
   carModelId: 0,
@@ -64,6 +52,7 @@ async function loadUnits() {
     const unitsData = await Promise.all(models.value.map(model => rentalApi.getCarModelUnits(model.id)))
     units.value = unitsData.flat().map((unit) => {
       const ownerModel = models.value.find(model => model.id === (unit.carModel?.id ?? unit.modelId))
+
       return {
         ...unit,
         modelName: ownerModel
@@ -74,10 +63,20 @@ async function loadUnits() {
 
     if (!newUnit.carModelId && models.value[0]) {
       newUnit.carModelId = models.value[0].id
+      selectedUnitModel.value = models.value[0]
+    }
+
+    if (newUnit.carModelId) {
+      const selected = models.value.find(model => model.id === newUnit.carModelId)
+      if (selected) {
+        selectedUnitModel.value = selected
+      }
     }
   }
   catch (error) {
-    errorMessage.value = error instanceof Error ? error.message : 'Nie udało się pobrać danych floty'
+    errorMessage.value = error instanceof Error
+      ? error.message
+      : 'Nie udało się pobrać danych floty'
   }
   finally {
     loading.value = false
@@ -95,6 +94,7 @@ async function createUnit() {
     || newUnit.productionYear < 1900
   ) {
     errorMessage.value = 'Uzupełnij poprawnie wszystkie pola pojazdu.'
+
     return
   }
 
@@ -113,51 +113,9 @@ async function createUnit() {
     await loadUnits()
   }
   catch (error) {
-    errorMessage.value = error instanceof Error ? error.message : 'Nie udało się dodać pojazdu'
-  }
-}
-
-async function createModel() {
-  if (
-    !modelForm.brand.trim()
-    || !modelForm.model.trim()
-    || !modelForm.segment.trim()
-    || !modelForm.transmissionType.trim()
-    || !modelForm.fuelType.trim()
-    || modelForm.pricePerDay <= 0
-    || modelForm.depositAmount < 0
-    || modelForm.mileageLimitPerDay <= 0
-    || modelForm.extraMileageFee < 0
-    || modelForm.powerHp <= 0
-  ) {
-    errorMessage.value = 'Uzupełnij poprawnie wszystkie pola modelu.'
-    return
-  }
-
-  creatingModel.value = true
-
-  try {
-    await rentalApi.createCarModel({
-      brand: modelForm.brand,
-      model: modelForm.model,
-      segment: modelForm.segment,
-      pricePerDay: modelForm.pricePerDay,
-      depositAmount: modelForm.depositAmount,
-      mileageLimitPerDay: modelForm.mileageLimitPerDay,
-      extraMileageFee: modelForm.extraMileageFee,
-      powerHp: modelForm.powerHp,
-      transmissionType: modelForm.transmissionType,
-      fuelType: modelForm.fuelType,
-    })
-
-    successMessage.value = 'Model został dodany do katalogu.'
-    await loadUnits()
-  }
-  catch (error) {
-    errorMessage.value = error instanceof Error ? error.message : 'Nie udało się dodać modelu'
-  }
-  finally {
-    creatingModel.value = false
+    errorMessage.value = error instanceof Error
+      ? error.message
+      : 'Nie udało się dodać pojazdu'
   }
 }
 
@@ -167,21 +125,44 @@ async function changeStatus(unitId: number, status: string) {
     await loadUnits()
   }
   catch (error) {
-    errorMessage.value = error instanceof Error ? error.message : 'Nie udało się zmienić statusu pojazdu'
+    errorMessage.value = error instanceof Error
+      ? error.message
+      : 'Nie udało się zmienić statusu pojazdu'
   }
 }
 
 function getModelLabel(model: Record<string, any> | null): string {
-  if (!model) return ''
+  if (!model)
+    return ''
   // Obsługuj zarówno top-level jak i zagnieżdżone pola carModel
   const brand = model?.brand || model?.carModel?.brand || ''
   const name = model?.model || model?.carModel?.model || ''
+
   return `${brand} ${name}`.trim()
+}
+
+function handleUnitModelSelection(modelId: number | null) {
+  if (!modelId) {
+    selectedUnitModel.value = null
+
+    return
+  }
+
+  const selected = modelSearchResults.value.find(model => model.id === modelId)
+    ?? models.value.find(model => model.id === modelId)
+
+  if (selected) {
+    selectedUnitModel.value = selected
+    modelSearchResults.value = [selected]
+  }
 }
 
 const searchModels = createDebouncedFn(async (query: string) => {
   if (!query.trim()) {
-    modelSearchResults.value = []
+    modelSearchResults.value = selectedUnitModel.value
+      ? [selectedUnitModel.value]
+      : []
+
     return
   }
 
@@ -191,7 +172,7 @@ const searchModels = createDebouncedFn(async (query: string) => {
     const pageData = await rentalApi.getCarModels({ brand: query }, 0, 10)
     modelSearchResults.value = pageData.content
   }
-  catch (error) {
+  catch {
     modelSearchResults.value = []
   }
   finally {
@@ -209,65 +190,53 @@ watch(currentPage, loadUnits)
     <h1 class="text-3xl font-bold mb-2">
       Zarządzanie flotą
     </h1>
+
     <p class="text-slate-500 mb-6">
       Statusy aut: na placu, u klienta lub w warsztacie.
     </p>
 
-    <v-alert v-if="errorMessage" type="error" class="mb-4">
+    <div class="mb-6 flex flex-wrap gap-2">
+      <v-btn
+        variant="outlined"
+        to="/admin"
+      >
+        Powrót do panelu admina
+      </v-btn>
+
+      <v-btn
+        color="primary"
+        variant="tonal"
+        to="/admin/catalog"
+      >
+        Przejdź do katalogu
+      </v-btn>
+    </div>
+
+    <v-alert
+      v-if="errorMessage"
+      type="error"
+      class="mb-4"
+    >
       {{ errorMessage }}
     </v-alert>
-    <v-alert v-if="successMessage" type="success" class="mb-4">
+
+    <v-alert
+      v-if="successMessage"
+      type="success"
+      class="mb-4"
+    >
       {{ successMessage }}
     </v-alert>
 
     <v-card class="mb-6">
-      <v-card-title>Dodaj nowy model</v-card-title>
-      <v-card-text>
-        <v-row>
-          <v-col cols="12" md="4">
-            <v-text-field v-model="modelForm.brand" label="Marka" />
-          </v-col>
-          <v-col cols="12" md="4">
-            <v-text-field v-model="modelForm.model" label="Model" />
-          </v-col>
-          <v-col cols="12" md="4">
-            <v-text-field v-model="modelForm.segment" label="Segment" />
-          </v-col>
-          <v-col cols="12" md="3">
-            <v-text-field v-model.number="modelForm.pricePerDay" label="Cena za dzień" type="number" />
-          </v-col>
-          <v-col cols="12" md="3">
-            <v-text-field v-model.number="modelForm.depositAmount" label="Kaucja" type="number" />
-          </v-col>
-          <v-col cols="12" md="3">
-            <v-text-field v-model.number="modelForm.mileageLimitPerDay" label="Limit km / dzień" type="number" />
-          </v-col>
-          <v-col cols="12" md="3">
-            <v-text-field v-model.number="modelForm.extraMileageFee" label="Dopłata za km" type="number" />
-          </v-col>
-          <v-col cols="12" md="4">
-            <v-text-field v-model.number="modelForm.powerHp" label="Moc (KM)" type="number" />
-          </v-col>
-          <v-col cols="12" md="4">
-            <v-text-field v-model="modelForm.transmissionType" label="Skrzynia" />
-          </v-col>
-          <v-col cols="12" md="4">
-            <v-text-field v-model="modelForm.fuelType" label="Paliwo" />
-          </v-col>
-        </v-row>
-      </v-card-text>
-      <v-card-actions>
-        <v-btn color="primary" :loading="creatingModel" @click="createModel">
-          Dodaj model
-        </v-btn>
-      </v-card-actions>
-    </v-card>
-
-    <v-card class="mb-6">
       <v-card-title>Dodaj fizyczne auto</v-card-title>
+
       <v-card-text>
         <v-row>
-          <v-col cols="12" md="3">
+          <v-col
+            cols="12"
+            md="3"
+          >
             <v-autocomplete
               v-model="newUnit.carModelId"
               :items="modelSearchResults"
@@ -277,9 +246,10 @@ watch(currentPage, loadUnits)
               placeholder="Wpisz markę..."
               no-filter
               :loading="modelSearchLoading"
+              @update:model-value="handleUnitModelSelection"
               @update:search="searchModels"
             >
-              <template #item="{ props, item }">
+              <template #item="{props, item}">
                 <v-list-item
                   v-bind="props"
                   :subtitle="item?.raw
@@ -289,28 +259,76 @@ watch(currentPage, loadUnits)
               </template>
             </v-autocomplete>
           </v-col>
-          <v-col cols="12" md="3">
-            <v-text-field v-model="newUnit.licensePlate" label="Rejestracja" />
+
+          <v-col
+            cols="12"
+            md="3"
+          >
+            <v-text-field
+              v-model="newUnit.licensePlate"
+              label="Rejestracja"
+            />
           </v-col>
-          <v-col cols="12" md="3">
-            <v-text-field v-model="newUnit.vin" label="VIN" />
+
+          <v-col
+            cols="12"
+            md="3"
+          >
+            <v-text-field
+              v-model="newUnit.vin"
+              label="VIN"
+            />
           </v-col>
-          <v-col cols="12" md="3">
-            <v-text-field v-model.number="newUnit.currentMileage" label="Przebieg" type="number" />
+
+          <v-col
+            cols="12"
+            md="3"
+          >
+            <v-text-field
+              v-model.number="newUnit.currentMileage"
+              label="Przebieg"
+              type="number"
+            />
           </v-col>
-          <v-col cols="12" md="4">
-            <v-text-field v-model="newUnit.color" label="Kolor" />
+
+          <v-col
+            cols="12"
+            md="4"
+          >
+            <v-text-field
+              v-model="newUnit.color"
+              label="Kolor"
+            />
           </v-col>
-          <v-col cols="12" md="4">
-            <v-text-field v-model.number="newUnit.productionYear" label="Rocznik" type="number" />
+
+          <v-col
+            cols="12"
+            md="4"
+          >
+            <v-text-field
+              v-model.number="newUnit.productionYear"
+              label="Rocznik"
+              type="number"
+            />
           </v-col>
-          <v-col cols="12" md="4">
-            <v-text-field v-model="newUnit.imageUrl" label="URL zdjęcia" />
+
+          <v-col
+            cols="12"
+            md="4"
+          >
+            <v-text-field
+              v-model="newUnit.imageUrl"
+              label="URL zdjęcia"
+            />
           </v-col>
         </v-row>
       </v-card-text>
+
       <v-card-actions>
-        <v-btn color="primary" @click="createUnit">
+        <v-btn
+          color="primary"
+          @click="createUnit"
+        >
           Dodaj pojazd
         </v-btn>
       </v-card-actions>
@@ -318,31 +336,51 @@ watch(currentPage, loadUnits)
 
     <v-card>
       <v-card-title>Lista wszystkich aut</v-card-title>
+
       <v-table>
         <thead>
           <tr>
             <th>ID</th>
+
             <th>Rejestracja</th>
+
             <th>Model</th>
+
             <th>Status</th>
+
             <th>Przebieg</th>
+
             <th>Akcja</th>
           </tr>
         </thead>
+
         <tbody>
-          <tr v-for="unit in units" :key="unit.id">
+          <tr
+            v-for="unit in units"
+            :key="unit.id"
+          >
             <td>{{ unit.id }}</td>
+
             <td>{{ unit.licensePlate }}</td>
+
             <td>{{ unit.modelName || '-' }}</td>
+
             <td>{{ unit.status }}</td>
+
             <td>{{ unit.currentMileage ?? '-' }}</td>
+
             <td>
               <v-menu>
-                <template #activator="{ props }">
-                  <v-btn size="small" variant="outlined" v-bind="props">
+                <template #activator="{props}">
+                  <v-btn
+                    size="small"
+                    variant="outlined"
+                    v-bind="props"
+                  >
                     Zmień status
                   </v-btn>
                 </template>
+
                 <v-list>
                   <v-list-item
                     v-for="status in statusOptions"
@@ -357,7 +395,10 @@ watch(currentPage, loadUnits)
         </tbody>
       </v-table>
 
-      <div v-if="totalPages > 1" class="pa-4 flex justify-center">
+      <div
+        v-if="totalPages > 1"
+        class="pa-4 flex justify-center"
+      >
         <v-pagination
           v-model="currentPage"
           :length="totalPages"
