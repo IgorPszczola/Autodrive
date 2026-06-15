@@ -192,7 +192,7 @@ watch(currentPage, loadUnits)
     </h1>
 
     <p class="text-slate-500 mb-6">
-      Statusy aut: na placu, u klienta lub w warsztacie.
+      Dodaj fizyczne auta do floty.
     </p>
 
     <div class="mb-6 flex flex-wrap gap-2">
