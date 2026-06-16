@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { useCarImage } from '~/composables/useCarImage'
+
 definePageMeta({
   middleware: 'auth',
 })
@@ -6,6 +8,7 @@ definePageMeta({
 const route = useRoute()
 const router = useRouter()
 const rentalApi = useRentalApi()
+const carImage = useCarImage()
 
 function getLocalDate(offsetDays = 0): string {
   const date = new Date()
@@ -43,6 +46,7 @@ const form = reactive({
 
 const modelSearchResults = ref<Array<Record<string, any>>>([])
 const preselectedModel = ref<Record<string, any> | null>(null)
+const selectedModelImage = ref('')
 const insuranceVariants = ref<Array<Record<string, any>>>([])
 const addons = ref<Array<Record<string, any>>>([])
 
@@ -95,13 +99,12 @@ const estimatedAddons = computed(() => selectedAddons.value.reduce((total, addon
 const estimatedTotal = computed(() => estimatedBase.value + estimatedInsurance.value + estimatedAddons.value)
 const showSubmitButton = computed(() => isMounted.value && Number(step.value) >= 3)
 
-function getModelLabel(model: Record<string, any>): string {
-  return `${model?.brand ?? ''} ${model?.model ?? ''}`.trim()
-}
+const getModelLabel = (model: Record<string, any>): string => `${model?.brand ?? ''} ${model?.model ?? ''}`.trim()
 
 function handleModelSelection(modelId: number | null) {
   if (!modelId) {
     preselectedModel.value = null
+    selectedModelImage.value = ''
 
     return
   }
@@ -113,8 +116,22 @@ function handleModelSelection(modelId: number | null) {
 }
 
 async function ensureModelOptionsLoaded() {
-  const pageData = await rentalApi.getCarModels({}, 0, 10)
-  modelSearchResults.value = pageData.content
+  modelSearchResults.value = (await rentalApi.getCarModels({}, 0, 10)).content
+}
+
+async function loadSelectedModelImage(modelId: number) {
+  if (!modelId) {
+    selectedModelImage.value = ''
+
+    return
+  }
+
+  try {
+    selectedModelImage.value = await carImage.fetchModelImage(modelId)
+  }
+  catch {
+    selectedModelImage.value = ''
+  }
 }
 
 async function loadData() {
@@ -132,7 +149,6 @@ async function loadData() {
     addons.value = addonData
     modelSearchResults.value = modelsData.content
 
-    // Jeśli carModelId jest w URL query, załaduj ten model
     if (form.carModelId > 0) {
       try {
         const modelData = await rentalApi.getCarModel(form.carModelId)
@@ -140,6 +156,7 @@ async function loadData() {
           preselectedModel.value = modelData
           modelSearchResults.value = [modelData]
         }
+        await loadSelectedModelImage(form.carModelId)
       }
       catch (err) {
         console.error('Błąd przy ładowaniu modelu:', err)
@@ -239,6 +256,7 @@ const searchModels = createDebouncedFn(async (query: string) => {
   }
 }, 300)
 
+watch(() => form.carModelId, async modelId => await loadSelectedModelImage(modelId))
 onMounted(async () => {
   isMounted.value = true
   await loadData()
@@ -365,6 +383,21 @@ onMounted(async () => {
 
           <template #[`item.3`]>
             <v-row class="pt-4">
+              <v-col cols="12">
+                <v-img
+                  :src="selectedModelImage || undefined"
+                  height="220"
+                  cover
+                  class="bg-grey-lighten-3 rounded-lg mb-2"
+                >
+                  <template #placeholder>
+                    <div class="text-medium-emphasis text-xs text-black flex h-full w-full items-center justify-center">
+                      Brak zdjęcia
+                    </div>
+                  </template>
+                </v-img>
+              </v-col>
+
               <v-col
                 cols="12"
                 md="6"

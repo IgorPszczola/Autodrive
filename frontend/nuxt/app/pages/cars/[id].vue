@@ -1,6 +1,9 @@
 <script setup lang="ts">
+import { useCarImage } from '~/composables/useCarImage'
+
 const route = useRoute()
 const rentalApi = useRentalApi()
+const carImage = useCarImage()
 
 const modelId = computed(() => Number(route.params.id))
 
@@ -11,9 +14,7 @@ const units = ref<Array<Record<string, any>>>([])
 const reviews = ref<Array<Record<string, any>>>([])
 
 const modelImage = computed(() => {
-  const found = units.value.find(unit => typeof unit.imageUrl === 'string' && unit.imageUrl.trim())
-
-  return found?.imageUrl?.trim() ?? ''
+  return carImage.getFirstUnitImage(units.value)
 })
 
 async function loadDetails() {

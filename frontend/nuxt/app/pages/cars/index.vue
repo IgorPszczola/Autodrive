@@ -1,5 +1,8 @@
 <script setup lang="ts">
+import { useCarImage } from '~/composables/useCarImage'
+
 const rentalApi = useRentalApi()
+const carImage = useCarImage()
 
 const filters = reactive({
   brand: '',
@@ -11,7 +14,6 @@ const filters = reactive({
 const loading = ref(false)
 const errorMessage = ref('')
 const models = ref<Array<Record<string, any>>>([])
-const modelImageById = ref<Record<number, string>>({})
 const currentPage = ref(1)
 const totalPages = ref(0)
 
@@ -37,14 +39,8 @@ function createDebouncedFn<T extends (...args: any[]) => void>(fn: T, delay: num
   }
 }
 
-function getFirstUnitImage(units: Array<Record<string, any>>): string {
-  const found = units.find(unit => typeof unit.imageUrl === 'string' && unit.imageUrl.trim())
-
-  return found?.imageUrl?.trim() ?? ''
-}
-
 function getModelImage(modelId: number): string {
-  return modelImageById.value[modelId] ?? ''
+  return carImage.getCachedModelImage(modelId)
 }
 
 async function loadModels() {
@@ -72,9 +68,9 @@ async function loadModels() {
       pageData.content.map(async model => [model.id, await rentalApi.getCarModelUnits(model.id)] as const),
     )
 
-    modelImageById.value = Object.fromEntries(
-      modelUnits.map(([id, units]) => [id, getFirstUnitImage(units)]),
-    )
+    modelUnits.forEach(([id, units]) => {
+      carImage.setCachedModelImage(id, carImage.getFirstUnitImage(units))
+    })
   }
   catch (error) {
     errorMessage.value = error instanceof Error
