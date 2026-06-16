@@ -18,6 +18,14 @@ function getLocalDate(offsetDays = 0): string {
   return date.toISOString().slice(0, 10)
 }
 
+function addDaysToDate(value: string, days: number): string {
+  const date = new Date(value)
+  date.setDate(date.getDate() + days)
+  date.setMinutes(date.getMinutes() - date.getTimezoneOffset())
+
+  return date.toISOString().slice(0, 10)
+}
+
 function createDebouncedFn<T extends (...args: any[]) => any>(fn: T, delay: number) {
   let timeoutId: ReturnType<typeof setTimeout> | number | null = null
 
@@ -50,46 +58,27 @@ const selectedModelImage = ref('')
 const insuranceVariants = ref<Array<Record<string, any>>>([])
 const addons = ref<Array<Record<string, any>>>([])
 
-const selectedModel = computed(() => {
-  const found = modelSearchResults.value.find(model => model.id === form.carModelId)
-  if (found)
-    return found
-  if (form.carModelId && preselectedModel.value?.id === form.carModelId)
-    return preselectedModel.value
-
-  return null
-})
+const selectedModel = computed(() => modelSearchResults.value.find(model => model.id === form.carModelId)
+  ?? (form.carModelId && preselectedModel.value?.id === form.carModelId
+    ? preselectedModel.value
+    : null))
 const selectedAddons = computed(() => addons.value.filter(addon => form.addonIds.includes(addon.id)))
 
 const daysCount = computed(() => {
-  if (!form.startDate || !form.endDate) {
+  if (!form.startDate || !form.endDate)
     return 0
-  }
 
-  const start = new Date(form.startDate).getTime()
-  const end = new Date(form.endDate).getTime()
-  const diff = Math.ceil((end - start) / (1000 * 60 * 60 * 24))
-
-  return diff > 0
-    ? diff
-    : 0
+  return Math.max(0, Math.ceil((new Date(form.endDate).getTime() - new Date(form.startDate).getTime()) / (1000 * 60 * 60 * 24)))
 })
-
-const estimatedBase = computed(() => {
-  if (!selectedModel.value || !daysCount.value) {
-    return 0
-  }
-
-  return Number(selectedModel.value.pricePerDay || 0) * daysCount.value
-})
-
+const estimatedBase = computed(() => ((!selectedModel.value || !daysCount.value)
+  ? 0
+  : Number(selectedModel.value.pricePerDay || 0) * daysCount.value))
 const estimatedInsurance = computed(() => {
   const selected = insuranceVariants.value.find(item => item.id === form.insuranceVariantId)
-  if (!selected || !daysCount.value) {
-    return 0
-  }
 
-  return Number(selected.pricePerDay || 0) * daysCount.value
+  return (!selected || !daysCount.value)
+    ? 0
+    : Number(selected.pricePerDay || 0) * daysCount.value
 })
 
 const estimatedAddons = computed(() => selectedAddons.value.reduce((total, addon) => {
@@ -98,6 +87,9 @@ const estimatedAddons = computed(() => selectedAddons.value.reduce((total, addon
 
 const estimatedTotal = computed(() => estimatedBase.value + estimatedInsurance.value + estimatedAddons.value)
 const showSubmitButton = computed(() => isMounted.value && Number(step.value) >= 3)
+const minEndDate = computed(() => addDaysToDate(form.startDate, 1))
+const hasValidDateRange = computed(() => Boolean(form.startDate && form.endDate)
+  && new Date(form.endDate).getTime() > new Date(form.startDate).getTime())
 
 const getModelLabel = (model: Record<string, any>): string => `${model?.brand ?? ''} ${model?.model ?? ''}`.trim()
 
@@ -109,10 +101,7 @@ function handleModelSelection(modelId: number | null) {
     return
   }
 
-  const selected = modelSearchResults.value.find(model => model.id === modelId)
-  if (selected) {
-    preselectedModel.value = selected
-  }
+  preselectedModel.value = modelSearchResults.value.find(model => model.id === modelId) ?? null
 }
 
 async function ensureModelOptionsLoaded() {
@@ -126,12 +115,7 @@ async function loadSelectedModelImage(modelId: number) {
     return
   }
 
-  try {
-    selectedModelImage.value = await carImage.fetchModelImage(modelId)
-  }
-  catch {
-    selectedModelImage.value = ''
-  }
+  selectedModelImage.value = await carImage.fetchModelImage(modelId).catch(() => '')
 }
 
 async function loadData() {
@@ -196,8 +180,8 @@ async function submitReservation() {
     return
   }
 
-  if (new Date(form.endDate).getTime() < new Date(form.startDate).getTime()) {
-    errorMessage.value = 'Data zakończenia nie może być wcześniejsza niż data rozpoczęcia.'
+  if (new Date(form.endDate).getTime() <= new Date(form.startDate).getTime()) {
+    errorMessage.value = 'Data zakończenia musi być co najmniej 1 dzień po dacie rozpoczęcia.'
 
     return
   }
@@ -228,12 +212,22 @@ async function submitReservation() {
   }
 }
 
+function goToNextStep() {
+  if (Number(step.value) === 1 && !hasValidDateRange.value) {
+    errorMessage.value = 'Data zakończenia musi być co najmniej 1 dzień po dacie rozpoczęcia.'
+
+    return
+  }
+
+  errorMessage.value = ''
+  step.value += 1
+}
+
 const searchModels = createDebouncedFn(async (query: string) => {
   if (!query.trim()) {
     if (modelSearchResults.value.length > 0) {
       return
     }
-
     try {
       await ensureModelOptionsLoaded()
     }
@@ -241,9 +235,7 @@ const searchModels = createDebouncedFn(async (query: string) => {
 
     return
   }
-
   modelSearchLoading.value = true
-
   try {
     const pageData = await rentalApi.getCarModels({ brand: query }, 0, 10)
     modelSearchResults.value = pageData.content
@@ -255,6 +247,11 @@ const searchModels = createDebouncedFn(async (query: string) => {
     modelSearchLoading.value = false
   }
 }, 300)
+
+watch(() => form.startDate, (startDate) => {
+  if (!form.endDate || new Date(form.endDate).getTime() <= new Date(startDate).getTime())
+    form.endDate = addDaysToDate(startDate, 1)
+})
 
 watch(() => form.carModelId, async modelId => await loadSelectedModelImage(modelId))
 onMounted(async () => {
@@ -343,6 +340,7 @@ onMounted(async () => {
                 v-model="form.endDate"
                 label="Data do"
                 type="date"
+                :min="minEndDate"
               />
             </div>
           </template>
@@ -477,7 +475,7 @@ onMounted(async () => {
         <v-btn
           v-if="!showSubmitButton"
           color="primary"
-          @click="step += 1"
+          @click="goToNextStep"
         >
           Dalej
         </v-btn>
