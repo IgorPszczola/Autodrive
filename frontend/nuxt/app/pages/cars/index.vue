@@ -5,7 +5,9 @@ const rentalApi = useRentalApi()
 const carImage = useCarImage()
 
 const filters = reactive({
+  search: '',
   brand: '',
+  segment: '',
   maxPrice: '',
   sortBy: 'pricePerDay',
   sortDir: 'asc',
@@ -14,12 +16,13 @@ const filters = reactive({
 const loading = ref(false)
 const errorMessage = ref('')
 const models = ref<Array<Record<string, any>>>([])
+const brandOptions = ref<string[]>([])
+const segmentOptions = ref<string[]>([])
 const currentPage = ref(1)
 const totalPages = ref(0)
 
 const sortByOptions = [
   { title: 'Cena za dzień', value: 'pricePerDay' },
-  { title: 'Marka', value: 'brand' },
   { title: 'Model', value: 'model' },
 ]
 
@@ -27,6 +30,19 @@ const sortDirOptions = [
   { title: 'Rosnąco', value: 'asc' },
   { title: 'Malejąco', value: 'desc' },
 ]
+
+const visibleModels = computed(() => {
+  const search = filters.search.trim().toLowerCase()
+  if (!search) {
+    return models.value
+  }
+
+  return models.value.filter((car) => {
+    const searchable = `${car.brand ?? ''} ${car.model ?? ''}`.toLowerCase()
+
+    return searchable.includes(search)
+  })
+})
 
 function createDebouncedFn<T extends (...args: any[]) => void>(fn: T, delay: number) {
   let timeoutId: ReturnType<typeof setTimeout> | null = null
@@ -51,6 +67,7 @@ async function loadModels() {
     const pageData = await rentalApi.getCarModels(
       {
         brand: filters.brand || undefined,
+        segment: filters.segment || undefined,
         maxPrice: filters.maxPrice
           ? Number(filters.maxPrice)
           : undefined,
@@ -82,7 +99,25 @@ async function loadModels() {
   }
 }
 
-onMounted(loadModels)
+async function loadFilterOptions() {
+  try {
+    const [brands, segments] = await Promise.all([
+      rentalApi.getCarBrands(),
+      rentalApi.getCarSegments(),
+    ])
+
+    brandOptions.value = brands
+    segmentOptions.value = segments
+  }
+  catch {}
+}
+
+onMounted(async () => {
+  await Promise.all([
+    loadFilterOptions(),
+    loadModels(),
+  ])
+})
 
 watch(currentPage, loadModels)
 
@@ -96,7 +131,7 @@ const triggerDebouncedLoad = createDebouncedFn(() => {
 }, 300)
 
 watch(
-  () => [filters.brand, filters.maxPrice, filters.sortBy, filters.sortDir],
+  () => [filters.search, filters.brand, filters.segment, filters.maxPrice, filters.sortBy, filters.sortDir],
   () => {
     triggerDebouncedLoad()
   },
@@ -124,12 +159,21 @@ watch(
     >
       <v-card-text>
         <v-row>
+          <v-col cols="12">
+            <v-text-field
+              v-model="filters.search"
+              label="Szukaj: marka lub model"
+              hide-details
+            />
+          </v-col>
+
           <v-col
             cols="12"
             md="4"
           >
-            <v-text-field
+            <v-select
               v-model="filters.brand"
+              :items="brandOptions"
               label="Marka"
               hide-details
             />
@@ -137,7 +181,19 @@ watch(
 
           <v-col
             cols="12"
-            md="3"
+            md="2"
+          >
+            <v-select
+              v-model="filters.segment"
+              :items="segmentOptions"
+              label="Segment"
+              hide-details
+            />
+          </v-col>
+
+          <v-col
+            cols="12"
+            md="2"
           >
             <v-text-field
               v-model="filters.maxPrice"
@@ -149,7 +205,7 @@ watch(
 
           <v-col
             cols="12"
-            md="3"
+            md="2"
           >
             <v-select
               v-model="filters.sortBy"
@@ -185,7 +241,7 @@ watch(
 
     <v-row>
       <v-col
-        v-for="car in models"
+        v-for="car in visibleModels"
         :key="car.id"
         cols="12"
         md="6"

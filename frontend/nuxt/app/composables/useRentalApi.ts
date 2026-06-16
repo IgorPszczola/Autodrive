@@ -248,6 +248,18 @@ export function useRentalApi() {
     }).then(normalizeListResponse<CarUnit>)
   }
 
+  function getCarBrands() {
+    return apiRequest<string[] | PagedResponse<string>>('/api/cars/brands', {
+      method: 'GET',
+    }).then(normalizeListResponse<string>)
+  }
+
+  function getCarSegments() {
+    return apiRequest<string[] | PagedResponse<string>>('/api/cars/segments', {
+      method: 'GET',
+    }).then(normalizeListResponse<string>)
+  }
+
   function getModelReviews(carModelId: number) {
     return apiRequest<Review[] | PagedResponse<Review>>(`/api/reviews/model/${carModelId}`, {
       method: 'GET',
@@ -365,6 +377,8 @@ export function useRentalApi() {
     getCarModels,
     getCarModel,
     getCarModelUnits,
+    getCarBrands,
+    getCarSegments,
     getModelReviews,
     createReview,
     getInsuranceVariants,
