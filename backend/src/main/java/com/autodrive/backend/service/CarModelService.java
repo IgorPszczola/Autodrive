@@ -96,4 +96,15 @@ public class CarModelService {
         CarModel saved = carModelRepository.save(carModel);
         return mapToDto(saved);
     }
+
+    public List<String> getAllBrands() {
+        return carModelRepository.findDistinctBrands();
+    }
+
+    public List<String> getAllSegments() {
+        return carModelRepository.findAll().stream()
+                .map(CarModel::getSegment)
+                .distinct()
+                .collect(Collectors.toList());
+    }
 }

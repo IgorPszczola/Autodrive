@@ -3,6 +3,7 @@ import com.autodrive.backend.dto.CarModelResponse;
 import com.autodrive.backend.model.CarModel;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -27,4 +28,7 @@ public interface CarModelRepository extends JpaRepository<CarModel, Integer>{
             @Param("maxPrice") BigDecimal maxPrice,
             @Param("segment") String segment
     );
+
+    @Query("SELECT DISTINCT cm.brand FROM CarModel cm")
+    public List<String> findDistinctBrands();
 }

@@ -101,4 +101,31 @@ public class CarController {
             ));
         }
     }
+
+    @GetMapping("/brands")
+    public ResponseEntity<?> getAllBrands() {
+        try {
+            List<String> brands = carModelService.getAllBrands();
+            return ResponseEntity.ok(brands);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of(
+                "status", 400,
+                "error", e.getMessage()
+            ));
+        }
+    }
+
+    @GetMapping("/segments")
+    public ResponseEntity<?> getAllSegments() {
+        try {
+            List<String> segments = carModelService.getAllSegments();
+            return ResponseEntity.ok(segments);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of(
+                "status", 400,
+                "error", e.getMessage()
+            ));
+        }
+    }
+    
 }
