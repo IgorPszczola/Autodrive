@@ -41,66 +41,88 @@ async function submit() {
 </script>
 
 <template>
-  <v-container
-    class="py-10"
-    max-width="520"
-  >
-    <v-card class="pa-4">
-      <v-card-title>Logowanie</v-card-title>
+  <div class="gradient-hero min-h-screen d-flex align-center justify-center py-12 animate-fade-in">
+    <v-container max-width="480">
+      <v-card class="pa-8 glass-card" rounded="xl" variant="flat">
+        <div class="text-center mb-6">
+          <h1 class="text-3xl font-weight-black text-white mb-2">
+            Witaj z powrotem
+          </h1>
+          <p class="text-medium-emphasis text-sm">
+            Zaloguj się do swojego konta Autodrive
+          </p>
+        </div>
 
-      <v-card-text>
-        <v-form @submit.prevent="submit">
-          <v-alert
-            v-if="authMessage"
-            type="warning"
-            variant="tonal"
-            class="mb-4"
-          >
-            {{ authMessage }}
-          </v-alert>
+        <v-card-text class="pa-0">
+          <v-form @submit.prevent="submit">
+            <v-alert
+              v-if="authMessage"
+              type="warning"
+              variant="tonal"
+              class="mb-4"
+              rounded="lg"
+            >
+              {{ authMessage }}
+            </v-alert>
 
-          <v-text-field
-            v-model="form.email"
-            label="Email"
-            type="email"
-            required
-          />
+            <v-text-field
+              v-model="form.email"
+              label="Adres email"
+              type="email"
+              prepend-inner-icon="mdi-email-outline"
+              variant="outlined"
+              color="primary"
+              required
+              class="mb-3"
+            />
 
-          <v-text-field
-            v-model="form.password"
-            label="Hasło"
-            type="password"
-            required
-          />
+            <v-text-field
+              v-model="form.password"
+              label="Hasło"
+              type="password"
+              prepend-inner-icon="mdi-lock-outline"
+              variant="outlined"
+              color="primary"
+              required
+              class="mb-4"
+            />
 
-          <v-alert
-            v-if="errorMessage"
-            type="error"
-            variant="tonal"
-            class="mb-4"
-          >
-            {{ errorMessage }}
-          </v-alert>
+            <v-alert
+              v-if="errorMessage"
+              type="error"
+              variant="tonal"
+              class="mb-4"
+              rounded="lg"
+            >
+              {{ errorMessage }}
+            </v-alert>
 
+            <v-btn
+              type="submit"
+              color="primary"
+              :loading="loading"
+              block
+              size="large"
+              variant="flat"
+              class="font-weight-semibold"
+              height="50"
+            >
+              Zaloguj się
+            </v-btn>
+          </v-form>
+        </v-card-text>
+
+        <v-card-actions class="pa-0 pt-6 justify-center">
           <v-btn
-            type="submit"
+            to="/register"
+            variant="text"
             color="primary"
-            :loading="loading"
-            block
+            class="text-sm font-weight-medium"
           >
-            Zaloguj się
+            Nie masz konta? Zarejestruj się
           </v-btn>
-        </v-form>
-      </v-card-text>
-
-      <v-card-actions>
-        <v-btn
-          to="/register"
-          variant="text"
-        >
-          Nie masz konta? Zarejestruj się
-        </v-btn>
-      </v-card-actions>
-    </v-card>
-  </v-container>
+        </v-card-actions>
+      </v-card>
+    </v-container>
+  </div>
 </template>

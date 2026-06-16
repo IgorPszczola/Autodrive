@@ -138,199 +138,249 @@ watch(
 </script>
 
 <template>
-  <v-container
-    class="py-8"
-    max-width="1160"
-  >
-    <div class="mb-6">
-      <h1 class="text-2xl font-semibold">
-        Katalog samochodów
-      </h1>
+  <div class="gradient-hero min-h-screen py-10 animate-fade-in">
+    <v-container max-width="1160">
+      <!-- Page Header -->
+      <div class="mb-8">
+        <h1 class="text-3xl font-weight-black text-white">
+          Katalog samochodów
+        </h1>
+        <p class="text-medium-emphasis mt-1">
+          Przeglądaj naszą flotę modeli premium, filtruj na żywo i rezerwuj natychmiast.
+        </p>
+      </div>
 
-      <p class="text-medium-emphasis mt-1">
-        Przeglądaj modele, filtruj i sprawdź szczegóły przed rezerwacją.
-      </p>
-    </div>
-
-    <v-card
-      class="mb-6"
-      rounded="lg"
-    >
-      <v-card-text>
-        <v-row>
-          <v-col cols="12">
-            <v-text-field
-              v-model="filters.search"
-              label="Szukaj: marka lub model"
-              hide-details
-            />
-          </v-col>
-
-          <v-col
-            cols="12"
-            md="4"
-          >
-            <v-select
-              v-model="filters.brand"
-              :items="brandOptions"
-              label="Marka"
-              hide-details
-              clearable
-            />
-          </v-col>
-
-          <v-col
-            cols="12"
-            md="2"
-          >
-            <v-select
-              v-model="filters.segment"
-              :items="segmentOptions"
-              label="Segment"
-              hide-details
-              clearable
-            />
-          </v-col>
-
-          <v-col
-            cols="12"
-            md="2"
-          >
-            <v-text-field
-              v-model="filters.maxPrice"
-              label="Maks. cena"
-              type="number"
-              hide-details
-            />
-          </v-col>
-
-          <v-col
-            cols="12"
-            md="2"
-          >
-            <v-select
-              v-model="filters.sortBy"
-              label="Sortuj po"
-              :items="sortByOptions"
-              hide-details
-            />
-          </v-col>
-
-          <v-col
-            cols="12"
-            md="2"
-          >
-            <v-select
-              v-model="filters.sortDir"
-              label="Kierunek"
-              :items="sortDirOptions"
-              hide-details
-            />
-          </v-col>
-        </v-row>
-      </v-card-text>
-    </v-card>
-
-    <v-alert
-      v-if="errorMessage"
-      type="error"
-      variant="tonal"
-      class="mb-4"
-    >
-      {{ errorMessage }}
-    </v-alert>
-
-    <v-row>
-      <v-col
-        v-for="car in visibleModels"
-        :key="car.id"
-        cols="12"
-        md="6"
+      <!-- Filters Panel -->
+      <v-card
+        class="mb-8 glass-card"
+        rounded="xl"
+        variant="flat"
       >
-        <v-card
-          class="h-full overflow-hidden"
-          rounded="lg"
-        >
-          <v-img
-            :src="getModelImage(car.id) || undefined"
-            height="220"
-            cover
-            class="bg-grey-lighten-3"
-          >
-            <template #placeholder>
-              <div class="text-medium-emphasis text-xs text-black flex h-full w-full items-center justify-center">
-                Brak zdjęcia
-              </div>
-            </template>
-          </v-img>
-
-          <v-card-title class="py-4">
-            <div class="flex gap-3 w-full items-start justify-between">
-              <div>
-                <div class="font-weight-medium text-xl leading-tight">
-                  {{ car.brand }} {{ car.model }}
-                </div>
-
-                <div class="text-medium-emphasis text-sm mt-1 flex gap-4">
-                  <span>
-                    <v-icon color="blue">mdi-gas-station</v-icon> {{ car.fuelType }}
-                  </span>
-
-                  <span>
-                    <v-icon color="blue">mdi-cog</v-icon> {{ car.transmissionType }}
-                  </span>
-
-                  <span>
-                    <v-icon color="blue">mdi-car-speed-limiter</v-icon> {{ car.powerHp }} KM
-                  </span>
-                </div>
-              </div>
-
-              <v-chip
+        <v-card-text class="pa-6">
+          <v-row>
+            <v-col cols="12" class="pb-2">
+              <v-text-field
+                v-model="filters.search"
+                label="Szukaj marki lub modelu..."
+                prepend-inner-icon="mdi-magnify"
+                variant="outlined"
                 color="primary"
-                size="small"
+                hide-details
+                clearable
+              />
+            </v-col>
+
+            <v-col cols="12" md="4" class="py-2">
+              <v-select
+                v-model="filters.brand"
+                :items="brandOptions"
+                label="Marka"
+                prepend-inner-icon="mdi-watermark"
+                variant="outlined"
+                color="primary"
+                hide-details
+                clearable
+              />
+            </v-col>
+
+            <v-col cols="12" md="2" class="py-2">
+              <v-select
+                v-model="filters.segment"
+                :items="segmentOptions"
+                label="Segment"
+                prepend-inner-icon="mdi-shape-outline"
+                variant="outlined"
+                color="primary"
+                hide-details
+                clearable
+              />
+            </v-col>
+
+            <v-col cols="12" md="2" class="py-2">
+              <v-text-field
+                v-model="filters.maxPrice"
+                label="Maks. cena (PLN)"
+                type="number"
+                prepend-inner-icon="mdi-cash"
+                variant="outlined"
+                color="primary"
+                hide-details
+                clearable
+              />
+            </v-col>
+
+            <v-col cols="12" md="2" class="py-2">
+              <v-select
+                v-model="filters.sortBy"
+                label="Sortuj według"
+                :items="sortByOptions"
+                prepend-inner-icon="mdi-sort"
+                variant="outlined"
+                color="primary"
+                hide-details
+              />
+            </v-col>
+
+            <v-col cols="12" md="2" class="py-2">
+              <v-select
+                v-model="filters.sortDir"
+                label="Kierunek"
+                :items="sortDirOptions"
+                prepend-inner-icon="mdi-swap-vertical"
+                variant="outlined"
+                color="primary"
+                hide-details
+              />
+            </v-col>
+          </v-row>
+        </v-card-text>
+      </v-card>
+
+      <!-- Alert Message -->
+      <v-alert
+        v-if="errorMessage"
+        type="error"
+        variant="tonal"
+        class="mb-6"
+        rounded="lg"
+      >
+        {{ errorMessage }}
+      </v-alert>
+
+      <!-- Loader State -->
+      <div v-if="loading && visibleModels.length === 0" class="d-flex justify-center py-12">
+        <v-progress-circular indeterminate color="primary" size="48" />
+      </div>
+
+      <!-- Cars Grid -->
+      <v-row v-else>
+        <v-col
+          v-for="car in visibleModels"
+          :key="car.id"
+          cols="12"
+          md="6"
+        >
+          <v-card
+            class="glass-card d-flex flex-column h-fit"
+            rounded="xl"
+            variant="flat"
+          >
+            <div class="position-relative">
+              <v-img
+                :src="getModelImage(car.id) || undefined"
+                height="240"
+                cover
+                class="bg-grey-darken-4 brightness-95"
               >
-                {{ car.segment }}
-              </v-chip>
+                <template #placeholder>
+                  <div class="d-flex h-full w-full items-center justify-center text-medium-emphasis text-sm bg-slate-900">
+                    <v-icon size="40" class="mr-2">mdi-car-outline</v-icon>
+                    Brak zdjęcia modelu
+                  </div>
+                </template>
+              </v-img>
+              <!-- Segment Tag -->
+              <div class="position-absolute top-0 right-0 pa-4 d-flex ga-2">
+                <v-chip
+                  v-if="car.minRentDays > 1"
+                  color="warning"
+                  variant="flat"
+                  size="small"
+                  class="font-weight-bold"
+                >
+                  Min. {{ car.minRentDays }} dni
+                </v-chip>
+                <v-chip
+                  color="primary"
+                  variant="flat"
+                  size="small"
+                  class="font-weight-bold"
+                >
+                  Klasa {{ car.segment }}
+                </v-chip>
+              </div>
             </div>
-          </v-card-title>
 
-          <v-divider />
+            <v-card-title class="px-6 pt-5 pb-2">
+              <div class="text-2xl font-weight-black text-white leading-tight">
+                {{ car.brand }} {{ car.model }}
+              </div>
+            </v-card-title>
 
-          <v-card-text class="pt-0">
-            <p class="font-weight-medium text-base mb-0">
-              <span class="text-sm">Cena (za dzień):</span> {{ car.pricePerDay }} PLN
-            </p>
-          </v-card-text>
+            <v-card-text class="px-6 pb-4 pt-0 flex-grow-1">
+              <!-- Technical Specs Icons Row -->
+              <div class="text-medium-emphasis text-sm d-flex ga-4 mb-4 flex-wrap border-b border-white/5 pb-4">
+                <span class="d-flex align-center ga-1">
+                  <v-icon color="primary" size="18">mdi-gas-station-outline</v-icon>
+                  {{ car.fuelType }}
+                </span>
 
-          <v-card-actions class="pt-0">
-            <v-btn
-              :to="`/cars/${car.id}`"
-              color="primary"
-              variant="text"
-            >
-              Szczegóły
-            </v-btn>
+                <span class="d-flex align-center ga-1">
+                  <v-icon color="primary" size="18">mdi-cog-outline</v-icon>
+                  {{ car.transmissionType }}
+                </span>
 
-            <v-btn
-              :to="`/client/reservations/new?carModelId=${car.id}`"
-              variant="text"
-            >
-              Rezerwuj
-            </v-btn>
-          </v-card-actions>
-        </v-card>
-      </v-col>
-    </v-row>
+                <span class="d-flex align-center ga-1">
+                  <v-icon color="primary" size="18">mdi-engine-outline</v-icon>
+                  {{ car.powerHp }} KM
+                </span>
+              </div>
 
-    <div
-      v-if="totalPages > 1"
-      class="mt-6 flex justify-center"
-    >
-      <v-pagination
-        v-model="currentPage"
-        :length="totalPages"
-      />
-    </div>
-  </v-container>
+              <!-- Price Box -->
+              <div class="d-flex justify-space-between align-center pt-2">
+                <div>
+                  <div class="text-xs text-medium-emphasis uppercase font-weight-bold mb-1" style="letter-spacing: 0.05em;">Kaucja</div>
+                  <div class="text-base font-weight-semibold text-white">{{ car.depositAmount }} PLN</div>
+                </div>
+                <div class="text-right">
+                  <div class="text-xs text-medium-emphasis uppercase font-weight-bold mb-1" style="letter-spacing: 0.05em;">Cena za dzień</div>
+                  <div class="text-2xl font-weight-black text-primary">{{ car.pricePerDay }} PLN</div>
+                </div>
+              </div>
+            </v-card-text>
+
+            <v-divider style="border-color: rgba(255, 255, 255, 0.05) !important;" />
+
+            <v-card-actions class="px-6 py-4 ga-2">
+              <v-btn
+                :to="`/cars/${car.id}`"
+                color="secondary"
+                variant="outlined"
+                class="flex-1 font-weight-semibold"
+                height="42"
+                style="border-color: rgba(255, 255, 255, 0.1);"
+              >
+                Szczegóły
+              </v-btn>
+
+              <v-btn
+                :to="`/client/reservations/new?carModelId=${car.id}`"
+                color="primary"
+                variant="flat"
+                class="flex-1 font-weight-semibold"
+                height="42"
+              >
+                Rezerwuj
+              </v-btn>
+            </v-card-actions>
+          </v-card>
+        </v-col>
+      </v-row>
+
+      <!-- Pagination -->
+      <div
+        v-if="totalPages > 1"
+        class="mt-10 d-flex justify-center"
+      >
+        <v-pagination
+          v-model="currentPage"
+          :length="totalPages"
+          active-color="primary"
+          rounded="circle"
+          variant="flat"
+          class="glass-panel"
+        />
+      </div>
+    </v-container>
+  </div>
 </template>

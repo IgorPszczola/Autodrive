@@ -186,224 +186,304 @@ watch(currentPage, loadUnits)
 </script>
 
 <template>
-  <v-container class="py-8">
-    <h1 class="text-3xl font-bold mb-2">
-      Zarządzanie flotą
-    </h1>
+  <div class="gradient-hero min-h-screen py-8 animate-fade-in">
+    <v-container max-width="1160">
+      <!-- Header -->
+      <div class="d-flex flex-column flex-md-row justify-space-between align-md-center mb-8 ga-4">
+        <div>
+          <h1 class="text-3xl font-weight-black text-white">
+            Zarządzanie flotą
+          </h1>
+          <p class="text-medium-emphasis mt-1">
+            Dodaj fizyczne auta do floty i kontroluj ich statusy.
+          </p>
+        </div>
 
-    <p class="text-slate-500 mb-6">
-      Dodaj fizyczne auta do floty.
-    </p>
-
-    <div class="mb-6 flex flex-wrap gap-2">
-      <v-btn
-        variant="outlined"
-        to="/admin"
-      >
-        Powrót do panelu admina
-      </v-btn>
-
-      <v-btn
-        color="primary"
-        variant="tonal"
-        to="/admin/catalog"
-      >
-        Przejdź do katalogu
-      </v-btn>
-    </div>
-
-    <v-alert
-      v-if="errorMessage"
-      type="error"
-      class="mb-4"
-    >
-      {{ errorMessage }}
-    </v-alert>
-
-    <v-alert
-      v-if="successMessage"
-      type="success"
-      class="mb-4"
-    >
-      {{ successMessage }}
-    </v-alert>
-
-    <v-card class="mb-6">
-      <v-card-title>Dodaj fizyczne auto</v-card-title>
-
-      <v-card-text>
-        <v-row>
-          <v-col
-            cols="12"
-            md="3"
+        <!-- Navigation -->
+        <div class="d-flex ga-2">
+          <v-btn
+            variant="outlined"
+            to="/admin"
+            prepend-icon="mdi-arrow-left"
+            class="font-weight-semibold"
+            style="border-color: rgba(255, 255, 255, 0.1);"
           >
-            <v-autocomplete
-              v-model="newUnit.carModelId"
-              :items="modelSearchResults"
-              :item-title="getModelLabel"
-              item-value="id"
-              label="Model"
-              placeholder="Wpisz markę..."
-              no-filter
-              :loading="modelSearchLoading"
-              @update:model-value="handleUnitModelSelection"
-              @update:search="searchModels"
-            >
-              <template #item="{props, item}">
-                <v-list-item
-                  v-bind="props"
-                  :subtitle="item?.raw
-                    ? `${item.raw.pricePerDay || 0} PLN / dzień`
-                    : ''"
-                />
-              </template>
-            </v-autocomplete>
-          </v-col>
+            Panel główny
+          </v-btn>
 
-          <v-col
-            cols="12"
-            md="3"
+          <v-btn
+            color="secondary"
+            variant="flat"
+            to="/admin/catalog"
+            prepend-icon="mdi-book-open-outline"
+            class="font-weight-semibold"
           >
-            <v-text-field
-              v-model="newUnit.licensePlate"
-              label="Rejestracja"
-            />
-          </v-col>
-
-          <v-col
-            cols="12"
-            md="3"
-          >
-            <v-text-field
-              v-model="newUnit.vin"
-              label="VIN"
-            />
-          </v-col>
-
-          <v-col
-            cols="12"
-            md="3"
-          >
-            <v-text-field
-              v-model.number="newUnit.currentMileage"
-              label="Przebieg"
-              type="number"
-            />
-          </v-col>
-
-          <v-col
-            cols="12"
-            md="4"
-          >
-            <v-text-field
-              v-model="newUnit.color"
-              label="Kolor"
-            />
-          </v-col>
-
-          <v-col
-            cols="12"
-            md="4"
-          >
-            <v-text-field
-              v-model.number="newUnit.productionYear"
-              label="Rocznik"
-              type="number"
-            />
-          </v-col>
-
-          <v-col
-            cols="12"
-            md="4"
-          >
-            <v-text-field
-              v-model="newUnit.imageUrl"
-              label="URL zdjęcia"
-            />
-          </v-col>
-        </v-row>
-      </v-card-text>
-
-      <v-card-actions>
-        <v-btn
-          color="primary"
-          @click="createUnit"
-        >
-          Dodaj pojazd
-        </v-btn>
-      </v-card-actions>
-    </v-card>
-
-    <v-card>
-      <v-card-title>Lista wszystkich aut</v-card-title>
-
-      <v-table>
-        <thead>
-          <tr>
-            <th>ID</th>
-
-            <th>Rejestracja</th>
-
-            <th>Model</th>
-
-            <th>Status</th>
-
-            <th>Przebieg</th>
-
-            <th>Akcja</th>
-          </tr>
-        </thead>
-
-        <tbody>
-          <tr
-            v-for="unit in units"
-            :key="unit.id"
-          >
-            <td>{{ unit.id }}</td>
-
-            <td>{{ unit.licensePlate }}</td>
-
-            <td>{{ unit.modelName || '-' }}</td>
-
-            <td>{{ unit.status }}</td>
-
-            <td>{{ unit.currentMileage ?? '-' }}</td>
-
-            <td>
-              <v-menu>
-                <template #activator="{props}">
-                  <v-btn
-                    size="small"
-                    variant="outlined"
-                    v-bind="props"
-                  >
-                    Zmień status
-                  </v-btn>
-                </template>
-
-                <v-list>
-                  <v-list-item
-                    v-for="status in statusOptions"
-                    :key="status"
-                    :title="status"
-                    @click="changeStatus(unit.id, status)"
-                  />
-                </v-list>
-              </v-menu>
-            </td>
-          </tr>
-        </tbody>
-      </v-table>
-
-      <div
-        v-if="totalPages > 1"
-        class="pa-4 flex justify-center"
-      >
-        <v-pagination
-          v-model="currentPage"
-          :length="totalPages"
-        />
+            Katalog modeli
+          </v-btn>
+        </div>
       </div>
-    </v-card>
-  </v-container>
+
+      <!-- Alerts -->
+      <v-alert
+        v-if="errorMessage"
+        type="error"
+        variant="tonal"
+        class="mb-6"
+        rounded="lg"
+      >
+        {{ errorMessage }}
+      </v-alert>
+
+      <v-alert
+        v-if="successMessage"
+        type="success"
+        variant="tonal"
+        class="mb-6"
+        rounded="lg"
+      >
+        {{ successMessage }}
+      </v-alert>
+
+
+      <!-- Add New Unit Form Card -->
+      <v-card class="mb-8 glass-card" rounded="xl" variant="flat">
+        <v-card-title class="px-6 pt-6 pb-2 text-xl font-weight-bold text-white d-flex align-center ga-2">
+          <v-icon color="primary">mdi-plus-circle-outline</v-icon>
+          Dodaj fizyczne auto
+        </v-card-title>
+
+        <v-card-text class="pa-6">
+          <v-row>
+            <v-col
+              cols="12"
+              md="3"
+              class="py-2"
+            >
+              <v-autocomplete
+                v-model="newUnit.carModelId"
+                :items="modelSearchResults"
+                :item-title="getModelLabel"
+                item-value="id"
+                label="Model samochodu"
+                placeholder="Wpisz markę..."
+                no-filter
+                :loading="modelSearchLoading"
+                variant="outlined"
+                color="primary"
+                hide-details
+                @update:model-value="handleUnitModelSelection"
+                @update:search="searchModels"
+              >
+                <template #item="{props, item}">
+                  <v-list-item
+                    v-bind="props"
+                    :subtitle="item?.raw
+                      ? `${item.raw.pricePerDay || 0} PLN / dzień`
+                      : ''"
+                  />
+                </template>
+              </v-autocomplete>
+            </v-col>
+
+            <v-col
+              cols="12"
+              md="3"
+              class="py-2"
+            >
+              <v-text-field
+                v-model="newUnit.licensePlate"
+                label="Numer rejestracyjny"
+                variant="outlined"
+                color="primary"
+                hide-details
+              />
+            </v-col>
+
+            <v-col
+              cols="12"
+              md="3"
+              class="py-2"
+            >
+              <v-text-field
+                v-model="newUnit.vin"
+                label="Numer VIN"
+                variant="outlined"
+                color="primary"
+                hide-details
+              />
+            </v-col>
+
+            <v-col
+              cols="12"
+              md="3"
+              class="py-2"
+            >
+              <v-text-field
+                v-model.number="newUnit.currentMileage"
+                label="Przebieg (km)"
+                type="number"
+                variant="outlined"
+                color="primary"
+                hide-details
+              />
+            </v-col>
+
+            <v-col
+              cols="12"
+              md="4"
+              class="py-2"
+            >
+              <v-text-field
+                v-model="newUnit.color"
+                label="Kolor"
+                variant="outlined"
+                color="primary"
+                hide-details
+              />
+            </v-col>
+
+            <v-col
+              cols="12"
+              md="4"
+              class="py-2"
+            >
+              <v-text-field
+                v-model.number="newUnit.productionYear"
+                label="Rocznik"
+                type="number"
+                variant="outlined"
+                color="primary"
+                hide-details
+              />
+            </v-col>
+
+            <v-col
+              cols="12"
+              md="4"
+              class="py-2"
+            >
+              <v-text-field
+                v-model="newUnit.imageUrl"
+                label="URL zdjęcia"
+                variant="outlined"
+                color="primary"
+                hide-details
+              />
+            </v-col>
+          </v-row>
+        </v-card-text>
+
+        <!-- Form Actions Bar -->
+        <v-divider style="border-color: rgba(255, 255, 255, 0.05) !important;" />
+        <v-card-actions class="px-6 py-4 bg-black/10">
+          <v-btn
+            color="primary"
+            variant="flat"
+            class="font-weight-semibold px-6"
+            height="42"
+            prepend-icon="mdi-plus"
+            @click="createUnit"
+          >
+            Dodaj pojazd do bazy
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+
+      <!-- Existing Fleet List Table -->
+      <v-card class="glass-card" rounded="xl" variant="flat">
+        <v-card-title class="px-6 pt-6 pb-2 text-xl font-weight-bold text-white d-flex align-center ga-2">
+          <v-icon color="primary">mdi-car-multiple</v-icon>
+          Zapisana flota pojazdów
+        </v-card-title>
+
+        <v-card-text class="pa-0">
+          <v-table class="bg-transparent text-white" style="color: #f8fafc !important;">
+            <thead>
+              <tr>
+                <th class="text-left font-weight-bold text-medium-emphasis border-b border-white/5 pl-6">ID</th>
+                <th class="text-left font-weight-bold text-medium-emphasis border-b border-white/5">Rejestracja</th>
+                <th class="text-left font-weight-bold text-medium-emphasis border-b border-white/5">Model</th>
+                <th class="text-left font-weight-bold text-medium-emphasis border-b border-white/5">Status</th>
+                <th class="text-left font-weight-bold text-medium-emphasis border-b border-white/5">Przebieg</th>
+                <th class="text-left font-weight-bold text-medium-emphasis border-b border-white/5 pr-6">Akcja</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              <tr
+                v-for="unit in units"
+                :key="unit.id"
+                class="hover:bg-white/2"
+              >
+                <td class="pl-6 font-weight-semibold text-white py-4">#{{ unit.id }}</td>
+                <td class="font-weight-bold text-white py-4">
+                  <span class="font-mono bg-white/5 px-2 py-1 rounded border border-white/10 text-sm">
+                    {{ unit.licensePlate }}
+                  </span>
+                </td>
+                <td class="font-weight-bold text-white py-4">{{ unit.modelName || '-' }}</td>
+                <td class="py-4">
+                  <v-chip
+                    :color="unit.status === 'AVAILABLE' ? 'success' : unit.status === 'RENTED' ? 'info' : unit.status === 'RESERVED' ? 'warning' : 'error'"
+                    size="small"
+                    variant="tonal"
+                    class="font-weight-semibold"
+                  >
+                    {{ unit.status }}
+                  </v-chip>
+                </td>
+                <td class="text-medium-emphasis py-4">{{ unit.currentMileage ?? '-' }} km</td>
+                <td class="py-4 pr-6">
+                  <v-menu>
+                    <template #activator="{props}">
+                      <v-btn
+                        size="small"
+                        variant="outlined"
+                        v-bind="props"
+                        append-icon="mdi-chevron-down"
+                        class="text-caption font-weight-semibold"
+                        style="border-color: rgba(255, 255, 255, 0.1);"
+                      >
+                        Zmień status
+                      </v-btn>
+                    </template>
+
+                    <v-list class="glass-panel" rounded="lg">
+                      <v-list-item
+                        v-for="status in statusOptions"
+                        :key="status"
+                        :title="status"
+                        class="hover:bg-white/5 cursor-pointer text-white"
+                        @click="changeStatus(unit.id, status)"
+                      />
+                    </v-list>
+                  </v-menu>
+                </td>
+              </tr>
+              <tr v-if="!units.length">
+                <td colspan="6" class="text-center text-medium-emphasis py-6">
+                  Brak pojazdów we flocie
+                </td>
+              </tr>
+            </tbody>
+          </v-table>
+        </v-card-text>
+
+        <!-- Pagination -->
+        <div
+          v-if="totalPages > 1"
+          class="pa-4 d-flex justify-center"
+        >
+          <v-pagination
+            v-model="currentPage"
+            :length="totalPages"
+            active-color="primary"
+            rounded="circle"
+            variant="flat"
+            class="glass-panel"
+          />
+        </div>
+      </v-card>
+    </v-container>
+  </div>
 </template>

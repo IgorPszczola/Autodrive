@@ -16,13 +16,14 @@ async function handleLogout() {
 
 <template>
   <v-app>
-    <v-app-bar>
+    <v-app-bar class="glass-panel" flat>
       <v-app-bar-title>
         <NuxtLink
-          class="color-white decoration-none"
+          class="text-h5 font-weight-black color-white decoration-none d-flex align-center"
           to="/"
+          style="letter-spacing: -0.05em !important;"
         >
-          Autodrive
+          <span class="gradient-text">Auto</span>drive
         </NuxtLink>
       </v-app-bar-title>
 

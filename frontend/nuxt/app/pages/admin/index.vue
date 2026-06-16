@@ -132,300 +132,336 @@ async function processReturn() {
   }
 }
 
+watch(monthlyEarnings, () => {
+  const trySetup = (retries = 5) => {
+    const sparkline = document.querySelector('.v-sparkline')
+    if (sparkline) {
+      const circles = sparkline.querySelectorAll('circle')
+      circles.forEach((circle, idx) => {
+        const value = monthlyEarningsValues.value[idx]
+        const label = monthlyEarningsLabels.value[idx]
+        if (value !== undefined) {
+          circle.querySelectorAll('title').forEach(t => t.remove())
+          const titleEl = document.createElementNS('http://www.w3.org/2000/svg', 'title')
+          titleEl.textContent = `${label}: ${formatCurrency(value)}`
+          circle.appendChild(titleEl)
+          circle.style.cursor = 'pointer'
+        }
+      })
+    } else if (retries > 0) {
+      setTimeout(() => trySetup(retries - 1), 100)
+    }
+  }
+  nextTick(() => trySetup())
+}, { deep: true })
+
 onMounted(loadDashboard)
 </script>
 
 <template>
-  <v-container class="py-8">
-    <h1 class="text-3xl font-bold mb-2">
-      Panel pracownika / administratora
-    </h1>
-
-    <p class="text-slate-500 mb-6">
-      Rezerwacje klientów, wydawanie kluczyków i obsługa zwrotów.
-    </p>
-
-    <div class="mb-6 flex flex-wrap gap-2">
-      <v-btn
-        color="primary"
-        variant="tonal"
-        to="/admin/fleet"
-      >
-        Przejdź do floty
-      </v-btn>
-
-      <v-btn
-        color="primary"
-        variant="tonal"
-        to="/admin/catalog"
-      >
-        Przejdź do katalogu
-      </v-btn>
-    </div>
-
-    <v-row>
-      <v-col
-        cols="12"
-        md="3"
-      >
-        <v-card>
-          <v-card-title>Zysk całkowity</v-card-title>
-
-          <v-card-text class="text-2xl font-semibold">
-            {{ stats?.totalEarnings ?? 0 }} PLN
-          </v-card-text>
-        </v-card>
-      </v-col>
-
-      <v-col
-        cols="12"
-        md="3"
-      >
-        <v-card>
-          <v-card-title>Rezerwacje</v-card-title>
-
-          <v-card-text class="text-2xl font-semibold">
-            {{ stats?.totalReservationsCount ?? 0 }}
-          </v-card-text>
-        </v-card>
-      </v-col>
-
-      <v-col
-        cols="12"
-        md="3"
-      >
-        <v-card>
-          <v-card-title>Aktywne najmy</v-card-title>
-
-          <v-card-text class="text-2xl font-semibold">
-            {{ stats?.activeRentalsCount ?? 0 }}
-          </v-card-text>
-        </v-card>
-      </v-col>
-
-      <v-col
-        cols="12"
-        md="3"
-      >
-        <v-card>
-          <v-card-title>Flota w naprawie</v-card-title>
-
-          <v-card-text class="text-2xl font-semibold">
-            {{ stats?.fleetInRepairCount ?? 0 }}
-          </v-card-text>
-        </v-card>
-      </v-col>
-    </v-row>
-
-    <v-card
-      class="mt-6"
-      rounded="lg"
-    >
-      <v-card-title class="d-flex align-center justify-space-between pa-6 gap-2">
-        <span>Miesięczne zarobki</span>
-      </v-card-title>
-
-      <v-card-text>
-        <div
-          v-if="!sortedMonthlyEarnings.length"
-          class="text-medium-emphasis"
-        >
-          Brak danych do wyświetlenia.
+  <div class="gradient-hero min-h-screen py-8 animate-fade-in">
+    <v-container max-width="1200">
+      <!-- Header -->
+      <div class="d-flex flex-column flex-md-row justify-space-between align-md-center mb-8 ga-4">
+        <div>
+          <h1 class="text-3xl font-weight-black text-white">
+            Panel administratora
+          </h1>
+          <p class="text-medium-emphasis mt-1">
+            Przeglądaj statystyki finansowe, zarządzaj flotą i zatwierdzaj zwroty pojazdów.
+          </p>
         </div>
 
-        <div v-else>
-          <v-sparkline
-            :model-value="monthlyEarningsValues"
-            :line-width="1"
+        <!-- Quick actions -->
+        <div class="d-flex ga-2">
+          <v-btn
             color="primary"
-            min="0"
-            show-markers
-            interactive
-            :tooltip="{'class': 'pl-0 bg-grey-darken-4'}"
-            marker-size="1"
+            variant="flat"
+            to="/admin/catalog"
+            prepend-icon="mdi-car-multiple"
+            class="font-weight-semibold"
           >
-            <template #tooltip="{index, value}">
-              {{ monthlyEarningsLabels[index] }}: {{ formatCurrency(Number(value || 0)) }}
-            </template>
-          </v-sparkline>
+            Katalog modeli
+          </v-btn>
 
-          <div class="mt-4 gap-2 grid grid-cols-1 lg:grid-cols-4 md:grid-cols-3 sm:grid-cols-2">
-            <div
-              v-for="(entry, index) in sortedMonthlyEarnings"
-              :key="entry.month"
-              class="px-2 py-1.5 border border-[rgba(var(--v-theme-primary),0.2)] rounded-[10px] bg-[rgba(var(--v-theme-primary),0.04)]"
-            >
-              <v-tooltip location="top">
-                <template #activator="{props}">
-                  <div v-bind="props">
-                    <div class="text-[11px] text-[rgba(var(--v-theme-on-surface),0.72)] leading-tight">
-                      {{ monthlyEarningsLabels[index] }}
-                    </div>
+          <v-btn
+            color="secondary"
+            variant="outlined"
+            to="/admin/fleet"
+            prepend-icon="mdi-format-list-bulleted"
+            class="font-weight-semibold"
+            style="border-color: rgba(255, 255, 255, 0.1);"
+          >
+            Flota (Egzemplarze)
+          </v-btn>
+        </div>
+      </div>
 
-                    <div class="text-xs font-semibold mt-1">
-                      {{ formatCurrency(Number(entry.earnings || 0)) }}
-                    </div>
-                  </div>
-                </template>
+      <!-- Alerts -->
+      <v-alert
+        v-if="errorMessage"
+        type="error"
+        variant="tonal"
+        class="mb-6"
+        rounded="lg"
+      >
+        {{ errorMessage }}
+      </v-alert>
 
-                {{ monthlyEarningsLabels[index] }}: {{ formatCurrency(Number(entry.earnings || 0)) }}
-              </v-tooltip>
+      <v-alert
+        v-if="successMessage"
+        type="success"
+        variant="tonal"
+        class="mb-6"
+        rounded="lg"
+      >
+        {{ successMessage }}
+      </v-alert>
+
+      <!-- Stats Grid -->
+      <v-row class="mb-8">
+        <v-col cols="12" sm="6" md="3">
+          <v-card class="pa-5 glass-card d-flex align-center ga-4" variant="flat">
+            <v-avatar color="primary/15" rounded="lg" size="52">
+              <v-icon color="primary" size="28">mdi-currency-usd</v-icon>
+            </v-avatar>
+            <div>
+              <span class="text-xs text-medium-emphasis d-block uppercase font-weight-bold" style="letter-spacing: 0.05em;">Zysk całkowity</span>
+              <span class="text-2xl font-weight-black text-white">{{ stats?.totalEarnings ?? 0 }} PLN</span>
+            </div>
+          </v-card>
+        </v-col>
+
+        <v-col cols="12" sm="6" md="3">
+          <v-card class="pa-5 glass-card d-flex align-center ga-4" variant="flat">
+            <v-avatar color="success/15" rounded="lg" size="52">
+              <v-icon color="success" size="28">mdi-calendar-check</v-icon>
+            </v-avatar>
+            <div>
+              <span class="text-xs text-medium-emphasis d-block uppercase font-weight-bold" style="letter-spacing: 0.05em;">Wszystkie rezerwacje</span>
+              <span class="text-2xl font-weight-black text-white">{{ stats?.totalReservationsCount ?? 0 }}</span>
+            </div>
+          </v-card>
+        </v-col>
+
+        <v-col cols="12" sm="6" md="3">
+          <v-card class="pa-5 glass-card d-flex align-center ga-4" variant="flat">
+            <v-avatar color="info/15" rounded="lg" size="52">
+              <v-icon color="info" size="28">mdi-car-key</v-icon>
+            </v-avatar>
+            <div>
+              <span class="text-xs text-medium-emphasis d-block uppercase font-weight-bold" style="letter-spacing: 0.05em;">Aktywne najmy</span>
+              <span class="text-2xl font-weight-black text-white">{{ stats?.activeRentalsCount ?? 0 }}</span>
+            </div>
+          </v-card>
+        </v-col>
+
+        <v-col cols="12" sm="6" md="3">
+          <v-card class="pa-5 glass-card d-flex align-center ga-4" variant="flat">
+            <v-avatar color="warning/15" rounded="lg" size="52">
+              <v-icon color="warning" size="28">mdi-wrench-clock</v-icon>
+            </v-avatar>
+            <div>
+              <span class="text-xs text-medium-emphasis d-block uppercase font-weight-bold" style="letter-spacing: 0.05em;">W naprawie / Serwis</span>
+              <span class="text-2xl font-weight-black text-white">{{ stats?.fleetInRepairCount ?? 0 }}</span>
+            </div>
+          </v-card>
+        </v-col>
+      </v-row>
+
+      <!-- Chart Card -->
+      <v-card class="mb-8 glass-card" rounded="xl" variant="flat">
+        <v-card-title class="px-6 pt-6 pb-2 text-xl font-weight-bold text-white d-flex align-center ga-2">
+          <v-icon color="primary">mdi-chart-areaspline</v-icon>
+          Przychody w ujęciu miesięcznym (Bieżący rok)
+        </v-card-title>
+
+        <v-card-text class="pa-6">
+          <div v-if="!sortedMonthlyEarnings.length" class="text-medium-emphasis text-center py-8">
+            Brak dostępnych danych wykresu zarobków.
+          </div>
+
+          <div v-else>
+            <!-- Sparkline Chart -->
+            <v-sparkline
+              :model-value="monthlyEarningsValues"
+              :line-width="2"
+              color="primary"
+              min="0"
+              show-markers
+              interactive
+              auto-draw
+              smooth
+              fill
+              stroke-linecap="round"
+              :gradient="['#2563eb', '#10b981']"
+              height="100"
+              class="mb-6"
+            />
+
+            <!-- Monthly grid breakdown -->
+            <div class="mt-4 ga-3 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
+              <div
+                v-for="(entry, index) in sortedMonthlyEarnings"
+                :key="entry.month"
+                class="pa-3 border border-white/5 rounded-lg bg-white/2 d-flex flex-column"
+              >
+                <span class="text-xs text-medium-emphasis leading-none">{{ monthlyEarningsLabels[index] }}</span>
+                <span class="text-sm font-weight-black text-white mt-1">{{ formatCurrency(Number(entry.earnings || 0)) }}</span>
+              </div>
             </div>
           </div>
-        </div>
-      </v-card-text>
-    </v-card>
+        </v-card-text>
+      </v-card>
 
-    <v-card class="mb-6 mt-6">
-      <v-card-title class="pa-6">
-        Lista rezerwacji klientów
-      </v-card-title>
+      <!-- Reservations List Table -->
+      <v-card class="mb-8 glass-card" rounded="xl" variant="flat">
+        <v-card-title class="px-6 pt-6 pb-2 text-xl font-weight-bold text-white d-flex align-center ga-2">
+          <v-icon color="primary">mdi-calendar-multiple</v-icon>
+          Bieżące rezerwacje klientów
+        </v-card-title>
 
-      <v-table>
-        <thead>
-          <tr>
-            <th>ID</th>
+        <v-card-text class="pa-0">
+          <v-table class="bg-transparent text-white" style="color: #f8fafc !important;">
+            <thead>
+              <tr>
+                <th class="text-left font-weight-bold text-medium-emphasis border-b border-white/5 pl-6">ID</th>
+                <th class="text-left font-weight-bold text-medium-emphasis border-b border-white/5">Klient</th>
+                <th class="text-left font-weight-bold text-medium-emphasis border-b border-white/5">Auto</th>
+                <th class="text-left font-weight-bold text-medium-emphasis border-b border-white/5">Termin</th>
+                <th class="text-left font-weight-bold text-medium-emphasis border-b border-white/5">Dodatki</th>
+                <th class="text-left font-weight-bold text-medium-emphasis border-b border-white/5">Status</th>
+                <th class="text-right font-weight-bold text-medium-emphasis border-b border-white/5 pr-6">Akcja</th>
+              </tr>
+            </thead>
 
-            <th>Klient</th>
+            <tbody>
+              <tr
+                v-for="reservation in reservations"
+                :key="reservation.id"
+                class="hover:bg-white/2"
+              >
+                <td class="pl-6 font-weight-semibold text-white py-4">#{{ reservation.id }}</td>
+                <td class="text-sm text-white py-4">{{ getReservationUserEmail(reservation) }}</td>
+                <td class="font-weight-bold text-white py-4">{{ getReservationCarLabel(reservation) }}</td>
+                <td class="text-sm text-medium-emphasis py-4">{{ reservation.startDate }} — {{ reservation.endDate }}</td>
+                <td class="text-sm text-medium-emphasis py-4">
+                  {{ reservation.addons?.length
+                    ? reservation.addons.map((a: any) => a.name).join(', ')
+                    : '-' }}
+                </td>
+                <td class="py-4">
+                  <v-chip
+                    :color="reservation.status === 'CONFIRMED' ? 'warning' : reservation.status === 'RENTED' ? 'info' : reservation.status === 'COMPLETED' ? 'success' : 'error'"
+                    size="small"
+                    variant="tonal"
+                    class="font-weight-medium"
+                  >
+                    {{ reservation.status }}
+                  </v-chip>
+                </td>
+                <td class="pr-6 py-4 text-right">
+                  <v-btn
+                    v-if="canAssignKeys(reservation)"
+                    size="small"
+                    color="primary"
+                    variant="flat"
+                    class="font-weight-semibold"
+                    height="32"
+                    @click="assignUnit(reservation.id)"
+                  >
+                    Wydaj kluczyki
+                  </v-btn>
+                  <span v-else class="text-medium-emphasis text-xs">-</span>
+                </td>
+              </tr>
+              <tr v-if="!reservations.length">
+                <td colspan="7" class="text-center text-medium-emphasis py-6">
+                  Brak rezerwacji w systemie
+                </td>
+              </tr>
+            </tbody>
+          </v-table>
+        </v-card-text>
+      </v-card>
 
-            <th>Auto</th>
+      <!-- Return Processing Module -->
+      <v-card class="glass-card" rounded="xl" variant="flat">
+        <v-card-title class="px-6 pt-6 pb-2 text-xl font-weight-bold text-white d-flex align-center ga-2">
+          <v-icon color="primary">mdi-keyboard-return</v-icon>
+          Moduł odbioru pojazdu i rozliczenia zwrotu
+        </v-card-title>
 
-            <th>Termin</th>
+        <v-card-text class="pa-6">
+          <v-row>
+            <v-col cols="12" md="3" class="py-2">
+              <v-text-field
+                v-model.number="returnForm.reservationId"
+                label="ID rezerwacji"
+                type="number"
+                variant="outlined"
+                color="primary"
+                hide-details
+              />
+            </v-col>
 
-            <th>Ubezpieczenie</th>
+            <v-col cols="12" md="3" class="py-2">
+              <v-text-field
+                v-model.number="returnForm.currentMileage"
+                label="Bieżący przebieg (km)"
+                type="number"
+                variant="outlined"
+                color="primary"
+                hide-details
+              />
+            </v-col>
 
-            <th>Dodatki</th>
+            <v-col cols="12" md="3" class="py-2">
+              <v-text-field
+                v-model.number="returnForm.damageCost"
+                label="Kalkulacja kosztów szkody (PLN)"
+                type="number"
+                variant="outlined"
+                color="primary"
+                hide-details
+              />
+            </v-col>
 
-            <th>Status</th>
+            <v-col cols="12" md="3" class="py-2 d-flex align-center">
+              <v-checkbox
+                v-model="returnForm.isDamaged"
+                label="Pojazd uszkodzony przy zwrocie"
+                color="error"
+                hide-details
+              />
+            </v-col>
+          </v-row>
 
-            <th>Akcje</th>
-          </tr>
-        </thead>
+          <v-textarea
+            v-model="returnForm.damageNotes"
+            label="Opis stanu pojazdu i ewentualnych uszkodzeń..."
+            rows="3"
+            variant="outlined"
+            color="primary"
+            class="mt-4"
+            hide-details
+          />
+        </v-card-text>
 
-        <tbody>
-          <tr
-            v-for="reservation in reservations"
-            :key="reservation.id"
+        <!-- Form Action Bar -->
+        <v-divider style="border-color: rgba(255, 255, 255, 0.05) !important;" />
+        <v-card-actions class="px-6 py-4 bg-black/10">
+          <v-btn
+            color="primary"
+            variant="flat"
+            class="font-weight-semibold px-6"
+            height="42"
+            @click="processReturn"
           >
-            <td>{{ reservation.id }}</td>
-
-            <td>{{ getReservationUserEmail(reservation) }}</td>
-
-            <td>{{ getReservationCarLabel(reservation) }}</td>
-
-            <td>{{ reservation.startDate }} - {{ reservation.endDate }}</td>
-
-            <td>{{ reservation.insuranceVariant?.name ?? reservation.insuranceVariantName ?? '-' }}</td>
-
-            <td>
-              {{ reservation.addons?.length
-                ? reservation.addons.map((a: any) => a.name).join(', ')
-                : '-' }}
-            </td>
-
-            <td>{{ reservation.status }}</td>
-
-            <td>
-              <div class="flex gap-2">
-                <v-btn
-                  v-if="canAssignKeys(reservation)"
-                  size="small"
-                  color="primary"
-                  variant="outlined"
-                  @click="assignUnit(reservation.id)"
-                >
-                  Wydaj kluczyki
-                </v-btn>
-              </div>
-            </td>
-          </tr>
-        </tbody>
-      </v-table>
-    </v-card>
-
-    <v-alert
-      v-if="errorMessage"
-      type="error"
-      class="mb-4"
-    >
-      {{ errorMessage }}
-    </v-alert>
-
-    <v-alert
-      v-if="successMessage"
-      type="success"
-      class="my-2"
-    >
-      {{ successMessage }}
-    </v-alert>
-
-    <v-card class="mt-6 pa-4">
-      <v-card-title class="mb-4">
-        Moduł zwrotu auta
-      </v-card-title>
-
-      <v-card-text>
-        <v-row>
-          <v-col
-            cols="12"
-            md="3"
-          >
-            <v-text-field
-              v-model.number="returnForm.reservationId"
-              label="ID rezerwacji"
-              type="number"
-            />
-          </v-col>
-
-          <v-col
-            cols="12"
-            md="3"
-          >
-            <v-text-field
-              v-model.number="returnForm.currentMileage"
-              label="Przebieg"
-              type="number"
-            />
-          </v-col>
-
-          <v-col
-            cols="12"
-            md="3"
-          >
-            <v-text-field
-              v-model.number="returnForm.damageCost"
-              label="Koszt uszkodzeń"
-              type="number"
-            />
-          </v-col>
-
-          <v-col
-            cols="12"
-            md="3"
-            class="flex items-center"
-          >
-            <v-checkbox
-              v-model="returnForm.isDamaged"
-              label="Auto uszkodzone"
-            />
-          </v-col>
-        </v-row>
-
-        <v-textarea
-          v-model="returnForm.damageNotes"
-          label="Opis uszkodzeń"
-          rows="3"
-        />
-      </v-card-text>
-
-      <v-card-actions>
-        <v-btn
-          color="primary"
-          @click="processReturn"
-        >
-          Zakończ zwrot
-        </v-btn>
-      </v-card-actions>
-    </v-card>
-  </v-container>
+            Zatwierdź i rozlicz zwrot
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-container>
+  </div>
 </template>
