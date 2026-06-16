@@ -176,6 +176,7 @@ watch(
               :items="brandOptions"
               label="Marka"
               hide-details
+              clearable
             />
           </v-col>
 
@@ -188,6 +189,7 @@ watch(
               :items="segmentOptions"
               label="Segment"
               hide-details
+              clearable
             />
           </v-col>
 
