@@ -107,7 +107,10 @@ public class ReservationService {
 
         reservation.setInsuranceVariant(insurance);
         
-        BigDecimal insuranceCost = insurance.getPricePerDay().multiply(BigDecimal.valueOf(days));
+        BigDecimal dailyInsurance = carModel.getPricePerDay()
+                .multiply(insurance.getPricePerDay())
+                .divide(BigDecimal.valueOf(100), 2, java.math.RoundingMode.HALF_UP);
+        BigDecimal insuranceCost = dailyInsurance.multiply(BigDecimal.valueOf(days));
         currentTotalPrice = currentTotalPrice.add(insuranceCost);
 
         List<Addon> addons = addonRepository.findAllById(request.addonIds());

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 const { login, authMessage, clearAuthMessage } = useAuth()
 const router = useRouter()
+const route = useRoute()
 
 const form = reactive({
   email: '',
@@ -27,7 +28,9 @@ async function submit() {
       email: form.email,
       password: form.password,
     })
-    await router.push('/')
+    
+    const redirectUrl = (route.query.redirect as string) || '/'
+    await router.push(redirectUrl)
   }
   catch (error) {
     errorMessage.value = error instanceof Error

@@ -83,9 +83,17 @@ public class DataInitializer implements CommandLineRunner {
 
             InsuranceVariant full = new InsuranceVariant();
             full.setName("Pełne Premium (Szkoda 0)");
-            full.setDescription("Pełne zniesienie udziału własnego w szkodzie. Jedziesz bez stresu.");
-            full.setPricePerDay(new BigDecimal("59.00"));
+            full.setDescription("Pełne zniesienie udziału własnego w szkodzie. Jedziesz bez stresu. (10% ceny najmu / dzień)");
+            full.setPricePerDay(new BigDecimal("10.00"));
             insuranceRepository.save(full);
+        } else {
+            for (InsuranceVariant iv : insuranceRepository.findAll()) {
+                if (iv.getName() != null && (iv.getName().contains("Premium") || iv.getId() == 2)) {
+                    iv.setPricePerDay(new BigDecimal("10.00"));
+                    iv.setDescription("Pełne zniesienie udziału własnego w szkodzie. Jedziesz bez stresu. (10% ceny najmu / dzień)");
+                    insuranceRepository.save(iv);
+                }
+            }
         }
 
         if (addonRepository.count() == 0) {

@@ -75,11 +75,14 @@ const estimatedBase = computed(() => {
 
 const estimatedInsurance = computed(() => {
   const selected = insuranceVariants.value.find(item => item.id === form.insuranceVariantId)
-  if (!selected || !daysCount.value) {
+  if (!selected || !selectedModel.value || !daysCount.value) {
     return 0
   }
 
-  return Number(selected.pricePerDay || 0) * daysCount.value
+  const percentage = Number(selected.pricePerDay || 0)
+  const baseRate = Number(selectedModel.value.pricePerDay || 0)
+  const dailyInsurance = (baseRate * percentage) / 100
+  return dailyInsurance * daysCount.value
 })
 
 const estimatedAddons = computed(() => selectedAddons.value.reduce((total, addon) => {
@@ -312,7 +315,7 @@ onMounted(async () => {
                       <template #item="{ props, item }">
                         <v-list-item
                           v-bind="props"
-                          :subtitle="item?.raw ? `${item.raw.description} • +${item.raw.pricePerDay} PLN/dzień` : ''"
+                          :subtitle="item?.raw ? `${item.raw.description} • +${((Number(selectedModel?.pricePerDay || 0) * Number(item.raw.pricePerDay || 0)) / 100).toFixed(2)} PLN / dzień` : ''"
                         />
                       </template>
                     </v-select>

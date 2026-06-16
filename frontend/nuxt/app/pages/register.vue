@@ -11,24 +11,33 @@ const form = reactive({
   phoneNumber: '',
 })
 
+const formRef = ref<any>(null)
 const loading = ref(false)
 const errorMessage = ref('')
 const successMessage = ref('')
+
+const rules = {
+  required: (value: any) => !!value || 'Pole jest wymagane.',
+  email: (value: any) => {
+    const pattern = /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
+    return pattern.test(value) || 'Niepoprawny adres email.'
+  },
+  password: (value: any) => (value && value.length >= 8) || 'Hasło musi mieć minimum 8 znaków.',
+  phone: (value: any) => {
+    const pattern = /^[0-9]{9}$/
+    return pattern.test(value) || 'Numer telefonu musi składać się z dokładnie 9 cyfr.'
+  },
+}
 
 async function submit() {
   errorMessage.value = ''
   successMessage.value = ''
 
-  if (
-    !form.email.trim()
-    || !form.password.trim()
-    || !form.firstName.trim()
-    || !form.lastName.trim()
-    || !form.driverLicenseNumber.trim()
-    || !form.phoneNumber.trim()
-  ) {
-    errorMessage.value = 'Uzupełnij wszystkie wymagane pola formularza.'
+  if (!formRef.value) return
 
+  const { valid } = await formRef.value.validate()
+  if (!valid) {
+    errorMessage.value = 'Popraw błędy w formularzu przed rejestracją.'
     return
   }
 
@@ -71,9 +80,9 @@ async function submit() {
         </div>
 
         <v-card-text class="pa-0">
-          <v-form @submit.prevent="submit">
+          <v-form ref="formRef" @submit.prevent="submit">
             <v-row class="ma-0">
-              <v-col cols="12" md="6" class="pa-0 pr-md-2 pb-3">
+              <v-col cols="12" md="6" class="pa-0 pr-md-2 pb-2">
                 <v-text-field
                   v-model="form.firstName"
                   label="Imię"
@@ -81,11 +90,11 @@ async function submit() {
                   variant="outlined"
                   color="primary"
                   required
-                  hide-details
+                  :rules="[rules.required]"
                 />
               </v-col>
 
-              <v-col cols="12" md="6" class="pa-0 pl-md-2 pb-3">
+              <v-col cols="12" md="6" class="pa-0 pl-md-2 pb-2">
                 <v-text-field
                   v-model="form.lastName"
                   label="Nazwisko"
@@ -93,7 +102,7 @@ async function submit() {
                   variant="outlined"
                   color="primary"
                   required
-                  hide-details
+                  :rules="[rules.required]"
                 />
               </v-col>
             </v-row>
@@ -106,7 +115,8 @@ async function submit() {
               variant="outlined"
               color="primary"
               required
-              class="mb-3 mt-3"
+              :rules="[rules.required, rules.email]"
+              class="mb-2"
             />
 
             <v-text-field
@@ -117,7 +127,8 @@ async function submit() {
               variant="outlined"
               color="primary"
               required
-              class="mb-3"
+              :rules="[rules.required, rules.password]"
+              class="mb-2"
             />
 
             <v-text-field
@@ -127,7 +138,8 @@ async function submit() {
               variant="outlined"
               color="primary"
               required
-              class="mb-3"
+              :rules="[rules.required]"
+              class="mb-2"
             />
 
             <v-text-field
@@ -137,6 +149,7 @@ async function submit() {
               variant="outlined"
               color="primary"
               required
+              :rules="[rules.required, rules.phone]"
               class="mb-4"
             />
 

@@ -30,29 +30,26 @@ const sortDirOptions = [
   { title: 'Malejąco', value: 'desc' },
 ]
 
-const visibleModels = computed(() => {
+const allModels = ref<Array<Record<string, any>>>([])
+
+const filteredModels = computed(() => {
   const search = filters.search.trim().toLowerCase()
   if (!search) {
-    return models.value
+    return allModels.value
   }
 
-  return models.value.filter((car) => {
+  return allModels.value.filter((car) => {
     const searchable = `${car.brand ?? ''} ${car.model ?? ''}`.toLowerCase()
 
     return searchable.includes(search)
   })
 })
 
-function createDebouncedFn<T extends (...args: any[]) => void>(fn: T, delay: number) {
-  let timeoutId: ReturnType<typeof setTimeout> | null = null
-
-  return (...args: Parameters<T>) => {
-    if (timeoutId !== null) {
-      clearTimeout(timeoutId)
-    }
-    timeoutId = setTimeout(fn, delay, ...args)
-  }
-}
+const visibleModels = computed(() => {
+  const start = (currentPage.value - 1) * 10
+  const end = start + 10
+  return filteredModels.value.slice(start, end)
+})
 
 function getModelImage(modelId: number): string {
   return carImage.getCachedModelImage(modelId)
@@ -73,20 +70,11 @@ async function loadModels() {
         sortBy: filters.sortBy,
         sortDir: filters.sortDir,
       },
-      currentPage.value - 1,
-      10,
+      0,
+      1000,
     )
 
-    models.value = pageData.content
-    totalPages.value = pageData.totalPages
-
-    const modelUnits = await Promise.all(
-      pageData.content.map(async model => [model.id, await rentalApi.getCarModelUnits(model.id)] as const),
-    )
-
-    modelUnits.forEach(([id, units]) => {
-      carImage.setCachedModelImage(id, carImage.getFirstUnitImage(units))
-    })
+    allModels.value = pageData.content ?? []
   }
   catch (error) {
     errorMessage.value = error instanceof Error
@@ -111,6 +99,21 @@ async function loadFilterOptions() {
   catch {}
 }
 
+async function loadModelImages(modelsList: any[]) {
+  try {
+    const modelUnits = await Promise.all(
+      modelsList.map(async model => [model.id, await rentalApi.getCarModelUnits(model.id)] as const),
+    )
+
+    modelUnits.forEach(([id, units]) => {
+      carImage.setCachedModelImage(id, carImage.getFirstUnitImage(units))
+    })
+  }
+  catch (error) {
+    console.error('Failed to load images:', error)
+  }
+}
+
 onMounted(async () => {
   await Promise.all([
     loadFilterOptions(),
@@ -118,21 +121,31 @@ onMounted(async () => {
   ])
 })
 
-watch(currentPage, loadModels)
-
-const triggerDebouncedLoad = createDebouncedFn(() => {
-  if (currentPage.value !== 1) {
-    currentPage.value = 1
-
-    return
+watch(filteredModels, (newVal) => {
+  totalPages.value = Math.ceil(newVal.length / 10)
+  if (currentPage.value > totalPages.value) {
+    currentPage.value = Math.max(1, totalPages.value)
   }
-  loadModels()
-}, 300)
+}, { immediate: true })
+
+watch(visibleModels, (newVal) => {
+  if (newVal && newVal.length > 0) {
+    loadModelImages(newVal)
+  }
+}, { immediate: true })
 
 watch(
-  () => [filters.search, filters.brand, filters.segment, filters.maxPrice, filters.sortBy, filters.sortDir],
+  () => [filters.brand, filters.segment, filters.maxPrice, filters.sortBy, filters.sortDir],
   () => {
-    triggerDebouncedLoad()
+    currentPage.value = 1
+    loadModels()
+  },
+)
+
+watch(
+  () => filters.search,
+  () => {
+    currentPage.value = 1
   },
 )
 </script>

@@ -21,6 +21,7 @@ const errorMessage = ref('')
 const successMessage = ref('')
 const units = ref<Array<Record<string, any>>>([])
 const models = ref<Array<Record<string, any>>>([])
+const allModels = ref<Array<Record<string, any>>>([])
 const currentPage = ref(1)
 const totalPages = ref(0)
 const modelSearchResults = ref<Array<Record<string, any>>>([])
@@ -28,7 +29,7 @@ const modelSearchLoading = ref(false)
 const selectedUnitModel = ref<Record<string, any> | null>(null)
 
 const newUnit = reactive({
-  carModelId: 0,
+  carModelId: null as number | null,
   licensePlate: '',
   vin: '',
   currentMileage: 0,
@@ -37,21 +38,27 @@ const newUnit = reactive({
   imageUrl: '',
 })
 
+async function loadAllModels() {
+  try {
+    const pageData = await rentalApi.getCarModels({}, 0, 1000)
+    allModels.value = pageData.content ?? []
+    modelSearchResults.value = allModels.value
+  } catch (error) {
+    console.error('Nie udało się pobrać wszystkich modeli:', error)
+  }
+}
+
 async function loadUnits() {
   loading.value = true
   errorMessage.value = ''
 
   try {
-    const pageData = await rentalApi.getCarModels({}, currentPage.value - 1, 10)
-    models.value = pageData.content
-    totalPages.value = pageData.totalPages
+    const pageData = await rentalApi.getCarModels({}, 0, 1000)
+    const allModelsList = pageData.content ?? []
 
-    // Pokaż modele z bieżącej strony w autocomplete
-    modelSearchResults.value = models.value
-
-    const unitsData = await Promise.all(models.value.map(model => rentalApi.getCarModelUnits(model.id)))
-    units.value = unitsData.flat().map((unit) => {
-      const ownerModel = models.value.find(model => model.id === (unit.carModel?.id ?? unit.modelId))
+    const unitsData = await Promise.all(allModelsList.map(model => rentalApi.getCarModelUnits(model.id)))
+    const allUnits = unitsData.flat().map((unit) => {
+      const ownerModel = allModelsList.find(model => model.id === (unit.carModel?.id ?? unit.modelId))
 
       return {
         ...unit,
@@ -61,16 +68,18 @@ async function loadUnits() {
       }
     })
 
-    if (!newUnit.carModelId && models.value[0]) {
-      newUnit.carModelId = models.value[0].id
-      selectedUnitModel.value = models.value[0]
-    }
+    totalPages.value = Math.ceil(allUnits.length / 10)
+    const start = (currentPage.value - 1) * 10
+    units.value = allUnits.slice(start, start + 10)
 
     if (newUnit.carModelId) {
-      const selected = models.value.find(model => model.id === newUnit.carModelId)
+      const selected = allModels.value.find(model => model.id === newUnit.carModelId)
+        ?? allModelsList.find(model => model.id === newUnit.carModelId)
       if (selected) {
         selectedUnitModel.value = selected
       }
+    } else {
+      selectedUnitModel.value = null
     }
   }
   catch (error) {
@@ -144,24 +153,26 @@ function getModelLabel(model: Record<string, any> | null): string {
 function handleUnitModelSelection(modelId: number | null) {
   if (!modelId) {
     selectedUnitModel.value = null
+    modelSearchResults.value = allModels.value
 
     return
   }
 
-  const selected = modelSearchResults.value.find(model => model.id === modelId)
-    ?? models.value.find(model => model.id === modelId)
+  const selected = allModels.value.find(model => model.id === modelId)
 
   if (selected) {
     selectedUnitModel.value = selected
-    modelSearchResults.value = [selected]
+    modelSearchResults.value = allModels.value
   }
 }
 
 const searchModels = createDebouncedFn(async (query: string) => {
   if (!query.trim()) {
-    modelSearchResults.value = selectedUnitModel.value
-      ? [selectedUnitModel.value]
-      : []
+    if (selectedUnitModel.value && !allModels.value.some(m => m.id === selectedUnitModel.value?.id)) {
+      modelSearchResults.value = [selectedUnitModel.value, ...allModels.value]
+    } else {
+      modelSearchResults.value = allModels.value
+    }
 
     return
   }
@@ -169,7 +180,7 @@ const searchModels = createDebouncedFn(async (query: string) => {
   modelSearchLoading.value = true
 
   try {
-    const pageData = await rentalApi.getCarModels({ brand: query }, 0, 10)
+    const pageData = await rentalApi.getCarModels({ brand: query }, 0, 1000)
     modelSearchResults.value = pageData.content
   }
   catch {
@@ -180,7 +191,10 @@ const searchModels = createDebouncedFn(async (query: string) => {
   }
 }, 300)
 
-onMounted(loadUnits)
+onMounted(async () => {
+  await loadAllModels()
+  await loadUnits()
+})
 
 watch(currentPage, loadUnits)
 </script>
@@ -267,6 +281,7 @@ watch(currentPage, loadUnits)
                 label="Model samochodu"
                 placeholder="Wpisz markę..."
                 no-filter
+                clearable
                 :loading="modelSearchLoading"
                 variant="outlined"
                 color="primary"

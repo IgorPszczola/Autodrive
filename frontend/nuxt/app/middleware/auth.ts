@@ -1,4 +1,4 @@
-export default defineNuxtRouteMiddleware(async () => {
+export default defineNuxtRouteMiddleware(async (to) => {
   const { token, user, isAuthenticated, initializeAuth } = useAuth()
 
   if (token.value && !user.value) {
@@ -6,7 +6,7 @@ export default defineNuxtRouteMiddleware(async () => {
   }
 
   if (!isAuthenticated.value) {
-    return navigateTo('/login')
+    return navigateTo(`/login?redirect=${encodeURIComponent(to.fullPath)}`)
   }
 
   return undefined
