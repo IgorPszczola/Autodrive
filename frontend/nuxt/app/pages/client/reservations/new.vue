@@ -122,7 +122,7 @@ async function loadData() {
 
   try {
     const [modelsData, insuranceData, addonData] = await Promise.all([
-      rentalApi.getCarModels(),
+      rentalApi.getCarModels({}, 0, 1000),
       rentalApi.getInsuranceVariants(),
       rentalApi.getAddons(),
     ])

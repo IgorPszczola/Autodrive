@@ -38,7 +38,7 @@ async function loadReservations() {
 
 async function loadModelMap() {
   try {
-    const pageData = await rentalApi.getCarModels()
+    const pageData = await rentalApi.getCarModels({}, 0, 1000)
     const models = pageData.content ?? []
     modelIdByName.value = models.reduce<Record<string, number>>((acc, model) => {
       const key = `${model.brand}|${model.model}`
