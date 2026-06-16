@@ -23,7 +23,6 @@ const totalPages = ref(0)
 
 const sortByOptions = [
   { title: 'Cena za dzień', value: 'pricePerDay' },
-  { title: 'Model', value: 'model' },
 ]
 
 const sortDirOptions = [
