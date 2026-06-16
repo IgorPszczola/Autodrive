@@ -386,7 +386,7 @@ onMounted(async () => {
               <v-col cols="12">
                 <v-img
                   :src="selectedModelImage || undefined"
-                  height="220"
+                  height="350"
                   cover
                   class="bg-grey-lighten-3 rounded-lg mb-2"
                 >
