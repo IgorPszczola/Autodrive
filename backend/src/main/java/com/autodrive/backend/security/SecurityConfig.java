@@ -44,7 +44,9 @@ public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
             "/v3/api-docs/**",
             "/swagger-ui/**",
             "/swagger-ui.html",
-            "/api/addons/**"
+            "/api/addons/**",
+            "/api/cars/segments",
+            "/api/cars/brands"
         ).permitAll()
         .requestMatchers(HttpMethod.GET, "/api/reviews/model/**").permitAll()
         .anyRequest().authenticated()
